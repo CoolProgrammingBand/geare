@@ -11,18 +11,14 @@ int main(void) {
   auto &scheduler = Scheduler::instance();
 
   scheduler.add_system(new ClockSystem());
+  scheduler.add_system(new WindowSystem());
 
   window.show();
 
-  bool should_close = false;
-
-  window.on_should_close.connect(
-      [](const void *should_close_ptr) {
-        std::cout << "Should close triggered." << std::endl;
-        *(bool *)should_close_ptr = true;
-        return true;
-      },
-      &should_close);
+  window.on_should_close.connect([](const void *_, Window &window) {
+    std::cout << "Should close triggered." << std::endl;
+    window.close();
+  });
 
   window.on_key_press.connect([](const void *_, int key, int scancode,
                                  int action,
@@ -32,9 +28,8 @@ int main(void) {
     std::cout << x << ' ' << y << std::endl;
   });
 
-  while (!should_close) {
+  while (true) {
     scheduler.tick();
-    window.tick();
   }
 
   return 0;

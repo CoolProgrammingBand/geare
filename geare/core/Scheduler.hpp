@@ -8,9 +8,7 @@
 namespace geare::core {
 
 struct Scheduler : utils::Singleton<Scheduler> {
-  void add_system(System* system) {
-    return systems.push_back(system);
-  }
+  void add_system(System *system) { return systems.push_back(system); }
 
   virtual void tick() {
     for (auto &system : systems) {
@@ -19,7 +17,9 @@ struct Scheduler : utils::Singleton<Scheduler> {
   }
 
 protected:
-  std::vector<System*> systems;
+  // TODO: this leaks memory, systems never deleted
+  // Make an allocator for them?
+  std::vector<System *> systems;
 };
 
 } // namespace geare::core

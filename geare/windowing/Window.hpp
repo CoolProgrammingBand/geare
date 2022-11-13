@@ -13,8 +13,8 @@
 namespace geare::windowing {
 
 struct Window : utils::Singleton<Window> {
-  entt::delegate<bool()> on_should_close{
-      [](const void *_) -> bool { return true; }, this};
+  entt::delegate<void(Window &)> on_should_close{[](const void *, Window &) {},
+                                                 this};
   bool is_alive = false;
   double cursor_x;
   double cursor_y;
@@ -44,17 +44,18 @@ struct Window : utils::Singleton<Window> {
   }
 
   void tick() {
-    if (!is_alive)
+    if (!is_alive) {
+      glfwDestroyWindow(window);
+      window = nullptr;
       return;
+    }
 
     if (glfwWindowShouldClose(window))
-      if (on_should_close())
-        // allow the window to die (RIP)
-        is_alive = false;
+      on_should_close(*this);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
-    Clock::instance().frame_count++;
+    core::Clock::instance().frame_count++;
     glfwPollEvents();
   }
 
@@ -66,12 +67,16 @@ struct Window : utils::Singleton<Window> {
     glfwTerminate();
   }
 
+  void close() {
+    is_alive = false;
+  }
+
   void show() { glfwShowWindow(window); }
 
   void hide() { glfwHideWindow(window); }
 
 protected:
-  GLFWwindow *window;
+  GLFWwindow *window = nullptr;
 
   static auto _window_from_glfw(GLFWwindow *window) -> Window & {
     return *(Window *)glfwGetWindowUserPointer(window);
@@ -89,6 +94,10 @@ protected:
     window.cursor_y = y;
     window.on_cursor_move(x, y);
   }
+};
+
+struct WindowSystem : core::System {
+  virtual void tick() override { Window::instance().tick(); }
 };
 
 } // namespace geare::windowing
