@@ -1,8 +1,7 @@
 #include <iostream>
 
-#include "./geare/core/Inputs.hpp"
-#include "./geare/core/Scheduler.hpp"
-#include "./geare/windowing/Window.hpp"
+#include "./geare/core.hpp"
+#include "./geare/windowing.hpp"
 
 using namespace geare::windowing;
 using namespace geare::core;
