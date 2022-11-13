@@ -5,6 +5,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "../core/Clock.hpp"
 #include "../utils/Singleton.hpp"
 
 #include "entt.hpp"
@@ -17,6 +18,8 @@ struct Window : utils::Singleton<Window> {
   bool is_alive = false;
   double cursor_x;
   double cursor_y;
+
+  bool update_clock = true;
 
   using KeyPressCallback = void(int key, int scancode, int action, int mods);
   using CursorMoveCallback = void(double x, double y);
@@ -40,11 +43,22 @@ struct Window : utils::Singleton<Window> {
     glfwSetCursorPosCallback(window, _glfw_cursor_position_callback);
 
     is_alive = true;
+    update_clock = true;
+    last_tick_time = glfwGetTime();
   }
 
   void tick() {
     if (!is_alive)
       return;
+
+    auto &clock = core::Clock::instance();
+    if (update_clock) {
+      double current_tick_time = glfwGetTime();
+      clock.global_time = current_tick_time;
+      double delta_time = current_tick_time - last_tick_time;
+      clock.delta_time = delta_time;
+      last_tick_time = current_tick_time;
+    }
 
     if (glfwWindowShouldClose(window))
       if (on_should_close())
@@ -53,6 +67,8 @@ struct Window : utils::Singleton<Window> {
 
     glClear(GL_COLOR_BUFFER_BIT);
     glfwSwapBuffers(window);
+    if (update_clock)
+      clock.frame_count++;
     glfwPollEvents();
   }
 
@@ -70,6 +86,7 @@ struct Window : utils::Singleton<Window> {
 
 protected:
   GLFWwindow *window;
+  double last_tick_time = 0;
 
   static auto _window_from_glfw(GLFWwindow *window) -> Window & {
     return *(Window *)glfwGetWindowUserPointer(window);
