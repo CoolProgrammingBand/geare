@@ -1,11 +1,16 @@
 #include <iostream>
 
+#include "./geare/core/Scheduler.hpp"
 #include "./geare/windowing/Window.hpp"
 
 using namespace geare::windowing;
+using namespace geare::core;
 
 int main(void) {
   auto &window = Window::instance();
+  auto &scheduler = Scheduler::instance();
+
+  scheduler.add_system(new ClockSystem());
 
   window.show();
 
@@ -28,6 +33,7 @@ int main(void) {
   });
 
   while (!should_close) {
+    scheduler.tick();
     window.tick();
   }
 
