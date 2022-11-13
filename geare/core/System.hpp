@@ -19,6 +19,7 @@ struct System {
 
 protected:
   System() {}
+  ~System() {}
 };
 
 } // namespace geare::core

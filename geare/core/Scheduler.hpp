@@ -16,9 +16,13 @@ struct Scheduler : utils::Singleton<Scheduler> {
     }
   }
 
+  ~Scheduler() {
+    for (auto &system : systems) {
+      delete &system;
+    }
+  }
+
 protected:
-  // TODO: this leaks memory, systems never deleted
-  // Make an allocator for them?
   std::vector<System *> systems;
 };
 
