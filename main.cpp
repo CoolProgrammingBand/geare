@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "./geare/core/Inputs.hpp"
 #include "./geare/core/Scheduler.hpp"
 #include "./geare/windowing/Window.hpp"
 
@@ -12,6 +13,18 @@ int main(void) {
 
   scheduler.add_system(new ClockSystem());
   scheduler.add_system(new WindowSystem());
+  scheduler.add_system(new FunctionSystem([]() {
+    if (Inputs::instance().get_key_down('X')) {
+      std::cout << "X key pressed!" << std::endl;
+    } else if (Inputs::instance().get_key_up('X')) {
+      std::cout << "X key released!" << std::endl;
+    } else if (Inputs::instance().get_key_held('X')) {
+      std::cout << "X key held!" << std::endl;
+    }
+  }));
+  scheduler.add_system(new InputSystem());
+
+  Inputs::instance().capture_keycode('X');
 
   window.show();
 
@@ -20,13 +33,10 @@ int main(void) {
     window.close();
   });
 
-  window.on_key_press.connect([](const void *_, int key, int scancode,
-                                 int action,
-                                 int mods) { std::cout << key << std::endl; });
-
-  window.on_cursor_move.connect([](const void *_, double x, double y) {
-    std::cout << x << ' ' << y << std::endl;
-  });
+  window.on_key_press.connect(
+      [](const void *_, int key, int scancode, int action, int mods) {
+        _glfw_keypress_adapter(key, scancode, action, mods);
+      });
 
   while (true) {
     scheduler.tick();

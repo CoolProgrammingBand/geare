@@ -22,6 +22,19 @@ protected:
   ~System() {}
 };
 
+struct FunctionSystem : System {
+  FunctionSystem(std::function<void()> func) : func(func) {}
+  explicit FunctionSystem(SystemContract contract, std::function<void()> func)
+      : func(func) {
+    this->contract = contract;
+  }
+
+  virtual void tick() override { return func(); }
+
+protected:
+  std::function<void()> func;
+};
+
 } // namespace geare::core
 
 #endif

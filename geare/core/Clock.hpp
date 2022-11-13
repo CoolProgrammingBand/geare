@@ -4,7 +4,6 @@
 #include "../utils/Singleton.hpp"
 #include "System.hpp"
 
-#include <iostream>
 #include <GLFW/glfw3.h>
 
 namespace geare::core {
@@ -28,7 +27,6 @@ struct ClockSystem : System {
     clock.global_time = current_tick_time;
     clock.delta_time = current_tick_time - last_tick_time;
     last_tick_time = current_tick_time;
-    std::cout << clock.delta_time << std::endl;
   }
 
   double last_tick_time = 0;
