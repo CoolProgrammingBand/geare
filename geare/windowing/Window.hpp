@@ -1,14 +1,11 @@
 #ifndef _INCLUDE__GEARE__WINDOWING__WINDOW_
 #define _INCLUDE__GEARE__WINDOWING__WINDOW_
 
-#include <tuple>
-
-#include <GLFW/glfw3.h>
-
 #include "../core/Clock.hpp"
 #include "../utils/Singleton.hpp"
-
 #include "entt.hpp"
+#include "glfw.hpp"
+#include <tuple>
 
 namespace geare::windowing {
 
@@ -67,9 +64,7 @@ struct Window : utils::Singleton<Window> {
     glfwTerminate();
   }
 
-  void close() {
-    is_alive = false;
-  }
+  void close() { is_alive = false; }
 
   void show() { glfwShowWindow(window); }
 
