@@ -7,17 +7,18 @@ using namespace geare::windowing;
 using namespace geare::core;
 
 int main(void) {
-  auto root_scene = Scene();
+  auto world = World();
+  auto &scheduler = world.scheduler;
+
+  auto &root_scene = world.active_scene;
   auto some_entity = root_scene.create();
   root_scene.emplace<Spatial>(some_entity, Spatial());
   root_scene.emplace<Transform>(some_entity, Transform());
 
   auto &window = Window::instance();
-  auto &scheduler = Scheduler::instance();
 
-  auto down_mover = new FunctionSystem([](void *data) {
-    std::cout << "System ticked for data at " << (std::size_t)data << std::endl;
-  });
+  auto down_mover = new FunctionSystem(
+      [](std::byte *data) { std::cout << data << std::endl; });
 
   down_mover->contract.component_ids =
       new entt::id_type[]{entt::type_id<Spatial>().hash()};
@@ -52,7 +53,7 @@ int main(void) {
       });
 
   while (true) {
-    scheduler.tick();
+    scheduler.tick(world.active_scene);
   }
 
   return 0;

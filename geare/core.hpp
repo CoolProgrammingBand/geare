@@ -4,3 +4,4 @@
 #include "./core/System.hpp"
 #include "./core/Components.hpp"
 #include "./core/Scene.hpp"
+#include "./core/World.hpp"

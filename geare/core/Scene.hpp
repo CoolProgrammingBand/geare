@@ -6,7 +6,7 @@
 namespace geare::core
 {
     
-struct Scene : entt::basic_registry<entt::entity> {
+struct Scene : entt::registry {
     explicit Scene() {}
 };
 
