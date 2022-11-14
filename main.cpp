@@ -10,7 +10,7 @@ struct DownMoverSystem : StaticSystem<const Spatial> {
   virtual void tick(DownMoverSystem::view_t *v) override {
     auto& view = *v;
     for (auto &entry : view) {
-      const auto& spatial = view.get<Spatial>(entry);
+      const auto& spatial = view.get<const Spatial>(entry);
       std::cout << "Moved " << (int)entry
                 << " down by one, now at y=" << spatial.position.y << std::endl;
     }
