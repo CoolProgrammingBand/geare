@@ -2,3 +2,5 @@
 #include "./core/Inputs.hpp"
 #include "./core/Scheduler.hpp"
 #include "./core/System.hpp"
+#include "./core/Components.hpp"
+#include "./core/Scene.hpp"

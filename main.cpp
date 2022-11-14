@@ -7,6 +7,11 @@ using namespace geare::windowing;
 using namespace geare::core;
 
 int main(void) {
+  auto root_scene = Scene();
+  auto some_entity = root_scene.create();
+  root_scene.emplace<Spatial>(some_entity, Spatial());
+  root_scene.emplace<Transform>(some_entity, Transform());
+
   auto &window = Window::instance();
   auto &scheduler = Scheduler::instance();
 
