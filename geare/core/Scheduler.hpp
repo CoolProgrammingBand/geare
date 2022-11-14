@@ -14,16 +14,8 @@ struct Scheduler {
       auto &contract = system->contract;
 
       if (contract.captured_component_count > 0) {
-        using return_type =
-            decltype(registry.storage(contract.component_ids[0]));
-
-        // TODO: form a Group or a View for all the requested components
-
-        // this is very unsafe, wrong and generally crazy
-        std::byte buffer[sizeof(return_type)];
-        return_type *memory = (return_type *)&buffer[0];
-        *memory = registry.storage(contract.component_ids[0]);
-        system->tick(&buffer[0]);
+        auto* view = system->create_component_view(registry);
+        system->tick(view);
       } else {
         system->tick();
       }

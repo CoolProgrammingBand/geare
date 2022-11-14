@@ -23,12 +23,39 @@ struct SystemContract {
 struct System {
   SystemContract contract;
 
+  virtual auto create_component_view(entt::registry &) -> std::byte * {
+    return nullptr;
+  }
+
   virtual void tick(std::byte *ptr) {}
   virtual void tick() { return tick(nullptr); }
 
 protected:
   System() {}
   ~System() { contract.~SystemContract(); }
+};
+
+template <typename... Ts> struct StaticSystem;
+
+template <typename T> struct StaticSystem<T> : System {
+  StaticSystem() {
+    this->contract.component_ids =
+        new entt::id_type[]{entt::type_id<T>().hash()};
+    this->contract.captured_component_count = 1;
+  }
+
+  using view_t = decltype(std::declval<entt::registry>().view<T>());
+
+  virtual auto create_component_view(entt::registry &registry)
+      -> std::byte * override {
+    return (std::byte *)new view_t(registry.view<T>());
+  }
+
+  virtual void tick(std::byte *payload) final {
+    return tick((view_t *)payload);
+  }
+
+  virtual void tick(view_t *group) {}
 };
 
 struct FunctionSystem : System {
