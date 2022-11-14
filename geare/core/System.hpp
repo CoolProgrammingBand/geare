@@ -40,7 +40,16 @@ protected:
   ~System() { contract.~SystemContract(); }
 };
 
-template <typename... Ts> struct StaticSystem;
+template <typename... Ts> struct StaticSystem : System {
+  StaticSystem() {
+    this->contract.captured_component_count = sizeof...(Ts);
+    this->contract.component_ids =
+        new SystemContract::accessed_component_t[sizeof...(Ts)]{
+            {entt::type_id<Ts>().hash(), std::is_const_v<Ts>
+                                             ? ComponentAccessType::Const
+                                             : ComponentAccessType::Mut}...};
+  }
+};
 
 template <typename T> struct StaticSystem<T> : System {
   StaticSystem() {
