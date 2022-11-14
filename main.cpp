@@ -15,6 +15,14 @@ int main(void) {
   auto &window = Window::instance();
   auto &scheduler = Scheduler::instance();
 
+  auto down_mover = new FunctionSystem([](void *data) {
+    std::cout << "System ticked for data at " << (std::size_t)data << std::endl;
+  });
+
+  down_mover->contract.component_ids =
+      new entt::id_type[]{entt::type_id<Spatial>().hash()};
+  down_mover->contract.captured_component_count = 1;
+
   scheduler.add_system(new ClockSystem());
   scheduler.add_system(new WindowSystem());
   scheduler.add_system(new FunctionSystem([]() {
@@ -26,6 +34,7 @@ int main(void) {
       std::cout << "X key held!" << std::endl;
     }
   }));
+  scheduler.add_system(down_mover);
   scheduler.add_system(new InputSystem());
 
   Inputs::instance().capture_keycode('X');
