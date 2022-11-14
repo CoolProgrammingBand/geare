@@ -492,6 +492,7 @@
     <ClInclude Include="ext\glm\glm\vec3.hpp" />
     <ClInclude Include="ext\glm\glm\vec4.hpp" />
     <ClInclude Include="ext\glm\glm\vector_relational.hpp" />
+    <ClInclude Include="ext\gtest.hpp" />
     <ClInclude Include="geare\core.hpp" />
     <ClInclude Include="geare\core\Clock.hpp" />
     <ClInclude Include="geare\core\Inputs.hpp" />

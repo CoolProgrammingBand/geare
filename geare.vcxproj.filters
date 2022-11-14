@@ -1142,6 +1142,9 @@
     <ClInclude Include="ext\glfw.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ext\gtest.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ext\glm\glm\detail\func_common.inl">
