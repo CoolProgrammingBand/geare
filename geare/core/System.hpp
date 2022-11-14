@@ -7,16 +7,21 @@
 
 namespace geare::core {
 
+enum struct ComponentAccessType { Const, Mut };
+
 struct SystemContract {
   int global_priority = 0;
   bool call_only_on_main = false;
-  entt::id_type *component_ids = nullptr;
+
+  using accessed_component_t = std::tuple<entt::id_type, ComponentAccessType>;
+
+  accessed_component_t *component_ids = nullptr;
   std::size_t captured_component_count = 0;
 
   ~SystemContract() {
     if constexpr (!std::is_trivially_destructible<entt::id_type>::value)
       for (std::size_t i = 0; i < captured_component_count; i++)
-        delete (component_ids + i);
+        delete &std::get<0>(component_ids[i]);
   }
 };
 
@@ -39,8 +44,12 @@ template <typename... Ts> struct StaticSystem;
 
 template <typename T> struct StaticSystem<T> : System {
   StaticSystem() {
-    this->contract.component_ids =
-        new entt::id_type[]{entt::type_id<T>().hash()};
+    auto usage_kind = std::is_const_v<T> ? ComponentAccessType::Const
+                                         : ComponentAccessType::Mut;
+
+    // TODO: refactor me?
+    this->contract.component_ids = new SystemContract::accessed_component_t[]{
+        {entt::type_id<T>().hash(), usage_kind}};
     this->contract.captured_component_count = 1;
   }
 
