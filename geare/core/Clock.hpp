@@ -3,8 +3,7 @@
 
 #include "../utils/Singleton.hpp"
 #include "System.hpp"
-
-#include <GLFW/glfw3.h>
+#include "glfw.hpp"
 
 namespace geare::core {
 

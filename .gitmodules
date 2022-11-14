@@ -1,6 +1,14 @@
 [submodule "ext/entt"]
 	path = ext/entt
 	url = https://github.com/skypjack/entt.git
+	branch = v3.10.x
 [submodule "ext/glm"]
 	path = ext/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "ext/glfw"]
+	path = ext/glfw
+	url = https://github.com/glfw/glfw.git
+	branch = 3.3-stable
+[submodule "ext/gtest"]
+	path = ext/gtest
+	url = https://github.com/google/googletest.git
