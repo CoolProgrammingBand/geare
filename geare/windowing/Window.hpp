@@ -57,17 +57,23 @@ struct Window : utils::Singleton<Window> {
     glEnable(GL_DEPTH_TEST);
     glLoadIdentity();
 
+    auto cube_pos = glm::vec3(0, 0, -6);
+    auto local = glm::translate(glm::identity<glm::mat4>(), cube_pos);
+    local = glm::translate(local, cube_pos);
+    local =
+        glm::rotate(local, (float)core::Clock::instance().global_time * 16.f,
+                    glm::vec3(0, 1, 0));
+
     auto view =
-        glm::lookAt(glm::vec3(2.5f, 2.f, 3.f), glm::vec3(0.0f, 0.0f, 0.f),
-                    glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::lookAt(glm::vec3(0, 0, 0), cube_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
     auto projection =
         glm::perspective(.90f, (float)width / height, 0.1f, 100.f);
-    glLoadMatrixf(&projection[0][0]);
+    glLoadMatrixf(&(view * projection * local)[0][0]);
     glViewport(0, 0, width, height);
-    glTranslated(0, 0, -6);
     glRotatef(core::Clock::instance().global_time * 12, 1, 0, 1);
 
     glBegin(GL_POLYGON);
