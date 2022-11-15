@@ -26,9 +26,8 @@ struct Scheduler {
   }
 
   ~Scheduler() {
-    for (auto &system : systems) {
-      delete &system;
-    }
+    for (auto system : systems)
+      delete system;
   }
 
 protected:

@@ -34,9 +34,9 @@ struct System {
   virtual void tick(std::byte *ptr) {}
   virtual void tick() { return tick(nullptr); }
 
+  ~System() { contract.~SystemContract(); }
 protected:
   System() {}
-  ~System() { contract.~SystemContract(); }
 };
 
 // TODO: test this
