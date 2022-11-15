@@ -3,10 +3,15 @@
 
 namespace geare::utils {
 
-template <typename T> struct Singleton {
+template <typename T, bool per_thread_instance = false> struct Singleton {
   static inline T &instance() {
-    static T instance;
-    return instance;
+    if constexpr (per_thread_instance) {
+      static T instance;
+      return instance;
+    } else {
+      static thread_local T instance;
+      return instance;
+    }
   }
 
   Singleton(const Singleton &) = delete;
@@ -18,6 +23,9 @@ protected:
   Singleton() {}
   ~Singleton() {}
 };
+
+template <typename T>
+using PerThreadSingleton = Singleton<T, true>;
 
 } // namespace geare::utils
 
