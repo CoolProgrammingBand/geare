@@ -14,7 +14,10 @@ struct Scheduler {
       auto &contract = system->contract;
 
       if (contract.captured_component_count > 0) {
-        auto* view = system->create_component_view(registry);
+        // XXX: dangerous, alloca may stackoverflow
+        // It shouldn't, but it may. Fix that.
+        auto *view = (std::byte *)alloca(system->view_size);
+        system->create_component_view(registry, view);
         system->tick(view);
       } else {
         system->tick();

@@ -28,9 +28,8 @@ struct SystemContract {
 struct System {
   SystemContract contract;
 
-  virtual auto create_component_view(entt::registry &) -> std::byte * {
-    return nullptr;
-  }
+  std::size_t view_size;
+  virtual void create_component_view(entt::registry &, std::byte *) {}
 
   virtual void tick(std::byte *ptr) {}
   virtual void tick() { return tick(nullptr); }
@@ -49,21 +48,21 @@ template <typename... Ts> struct StaticSystem : System {
             {entt::type_id<Ts>().hash(), std::is_const_v<Ts>
                                              ? ComponentAccessType::Const
                                              : ComponentAccessType::Mut}...};
+    this->view_size = sizeof(view_t);
   }
 
   using view_t = decltype(std::declval<entt::registry>().view<Ts...>());
 
-  virtual auto create_component_view(entt::registry &registry)
-      -> std::byte * override {
-    return (std::byte *)new view_t(registry.view<Ts...>());
+  virtual void create_component_view(entt::registry &registry,
+                                     std::byte *out) override {
+    *(view_t *)out = view_t(registry.view<Ts...>());
   }
 
   virtual void tick(std::byte *payload) final {
-    view_t &view = *(view_t *)payload;
-    return tick(view);
+    return tick(*(view_t *)payload);
   }
 
-  virtual void tick(view_t &_) {}
+  virtual void tick(view_t &_) = 0;
 };
 
 struct FunctionSystem : System {
