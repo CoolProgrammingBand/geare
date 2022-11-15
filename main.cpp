@@ -6,11 +6,11 @@
 using namespace geare::windowing;
 using namespace geare::core;
 
-struct DownMoverSystem : StaticSystem<const Spatial> {
-  virtual void tick(DownMoverSystem::view_t *v) override {
-    auto& view = *v;
+struct DownMoverSystem : StaticSystem<Spatial> {
+  virtual void tick(DownMoverSystem::view_t &view) override {
     for (auto &entry : view) {
-      const auto& spatial = view.get<const Spatial>(entry);
+      auto &spatial = view.get<Spatial>(entry);
+      spatial.position.y -= 1;
       std::cout << "Moved " << (int)entry
                 << " down by one, now at y=" << spatial.position.y << std::endl;
     }

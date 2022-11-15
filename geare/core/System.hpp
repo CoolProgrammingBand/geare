@@ -70,10 +70,11 @@ template <typename T> struct StaticSystem<T> : System {
   }
 
   virtual void tick(std::byte *payload) final {
-    return tick((view_t *)payload);
+    view_t &view = *(view_t *)payload;
+    return tick(view);
   }
 
-  virtual void tick(view_t *group) {}
+  virtual void tick(view_t &_) {}
 };
 
 struct FunctionSystem : System {
