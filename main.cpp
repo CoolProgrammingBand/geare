@@ -1,4 +1,5 @@
 #include <iostream>
+#include <syncstream>
 
 #include "./geare/core.hpp"
 #include "./geare/windowing.hpp"
@@ -6,13 +7,16 @@
 using namespace geare::windowing;
 using namespace geare::core;
 
-struct DownMoverSystem : StaticSystem<Spatial> {
+struct DownMoverSystem : StaticSystem<Spatial, const Transform> {
   virtual void tick(DownMoverSystem::view_t &view) override {
     for (auto &entry : view) {
       auto &spatial = view.get<Spatial>(entry);
+      const auto &transform = view.get<const Transform>(entry);
       spatial.position.y -= 1;
-      std::cout << "Moved " << (int)entry
-                << " down by one, now at y=" << spatial.position.y << std::endl;
+      std::osyncstream{std::cout}
+          << "Moved " << (int)entry
+          << " down by one, now at y=" << spatial.position.y << std::endl
+          << "Transform is static! Here it is!" << std::endl;
     }
   }
 };

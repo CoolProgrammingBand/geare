@@ -40,6 +40,7 @@ protected:
   ~System() { contract.~SystemContract(); }
 };
 
+// TODO: test this
 template <typename... Ts> struct StaticSystem : System {
   StaticSystem() {
     this->contract.captured_component_count = sizeof...(Ts);
@@ -49,24 +50,12 @@ template <typename... Ts> struct StaticSystem : System {
                                              ? ComponentAccessType::Const
                                              : ComponentAccessType::Mut}...};
   }
-};
 
-template <typename T> struct StaticSystem<T> : System {
-  StaticSystem() {
-    auto usage_kind = std::is_const_v<T> ? ComponentAccessType::Const
-                                         : ComponentAccessType::Mut;
-
-    // TODO: refactor me?
-    this->contract.component_ids = new SystemContract::accessed_component_t[]{
-        {entt::type_id<T>().hash(), usage_kind}};
-    this->contract.captured_component_count = 1;
-  }
-
-  using view_t = decltype(std::declval<entt::registry>().view<T>());
+  using view_t = decltype(std::declval<entt::registry>().view<Ts...>());
 
   virtual auto create_component_view(entt::registry &registry)
       -> std::byte * override {
-    return (std::byte *)new view_t(registry.view<T>());
+    return (std::byte *)new view_t(registry.view<Ts...>());
   }
 
   virtual void tick(std::byte *payload) final {
