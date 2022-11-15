@@ -6,10 +6,10 @@ namespace geare::utils {
 template <typename T, bool per_thread_instance = false> struct Singleton {
   static inline T &instance() {
     if constexpr (per_thread_instance) {
-      static T instance;
+      static thread_local T instance;
       return instance;
     } else {
-      static thread_local T instance;
+      static T instance;
       return instance;
     }
   }
