@@ -60,7 +60,7 @@ int main(void) {
         _glfw_keypress_adapter(key, scancode, action, mods);
       });
 
-  while (true) {
+  while (window.is_alive) {
     scheduler.tick(world.active_scene);
   }
 
