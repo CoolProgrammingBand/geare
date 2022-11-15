@@ -38,27 +38,27 @@ struct Inputs : utils::Singleton<Inputs> {
     }
   }
 
-  inline void capture_keycode(int keycode) {
+  inline void register_keycode(int keycode) {
     captured_keycodes.insert(keycode);
   }
 
-  inline void key_press(int keycode) {
+  inline void handle_key_press(int keycode) {
     if (captured_keycodes.contains(keycode))
       state[keycode] = KeyState::Down;
   }
 
-  inline void key_release(int keycode) {
+  inline void handle_key_release(int keycode) {
     if (captured_keycodes.contains(keycode))
       state[keycode] = KeyState::Up;
   }
 
-  inline bool get_key_down(int keycode) {
+  inline bool is_key_down(int keycode) {
     return state[keycode] == KeyState::Down;
   }
 
-  inline bool get_key_up(int keycode) { return state[keycode] == KeyState::Up; }
+  inline bool is_key_up(int keycode) { return state[keycode] == KeyState::Up; }
 
-  inline bool get_key_held(int keycode) {
+  inline bool is_key_held(int keycode) {
     return state[keycode] == KeyState::Held;
   }
 
@@ -75,9 +75,9 @@ struct InputSystem : core::System {
 static void _glfw_keypress_adapter(int keycode, int scancode, int action,
                                    int mods) {
   if (action == GLFW_PRESS) {
-    Inputs::instance().key_press(keycode);
+    Inputs::instance().handle_key_press(keycode);
   } else if (action == GLFW_RELEASE) {
-    Inputs::instance().key_release(keycode);
+    Inputs::instance().handle_key_release(keycode);
   }
 }
 

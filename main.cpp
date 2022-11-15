@@ -33,19 +33,20 @@ int main(void) {
 
   scheduler.add_system(new ClockSystem());
   scheduler.add_system(new WindowSystem());
+
+  Inputs::instance().register_keycode('X');
   scheduler.add_system(new FunctionSystem([]() {
-    if (Inputs::instance().get_key_down('X')) {
+    if (Inputs::instance().is_key_down('X')) {
       std::cout << "X key pressed!" << std::endl;
-    } else if (Inputs::instance().get_key_up('X')) {
+    } else if (Inputs::instance().is_key_up('X')) {
       std::cout << "X key released!" << std::endl;
-    } else if (Inputs::instance().get_key_held('X')) {
+    } else if (Inputs::instance().is_key_held('X')) {
       std::cout << "X key held!" << std::endl;
     }
   }));
+
   scheduler.add_system(new DownMoverSystem());
   scheduler.add_system(new InputSystem());
-
-  Inputs::instance().capture_keycode('X');
 
   window.show();
 
