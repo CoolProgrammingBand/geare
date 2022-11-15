@@ -1,5 +1,5 @@
 compile-debug: prelude
-	clang++ ./main.cpp -o ./build/debug/main -g -Wall -std=c++20 -include-pch ./build/pch/entt.pch ./build/pch/glm.pch ./build/pch/glfw.pch ./build/pch/gtest.pch -lglfw -lGL -I ./ext/
+	clang++ ./main.cpp -o ./build/debug/main -g -Wall -std=c++20 -include-pch ./build/pch/entt.pch ./build/pch/glm.pch ./build/pch/glfw.pch ./build/pch/gtest.pch -lglfw -lGL -I ./ext/ -lGLEW
 
 warmup: prelude compile-ext-pch
 
