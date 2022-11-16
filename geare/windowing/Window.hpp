@@ -33,6 +33,9 @@ struct Window : utils::Singleton<Window> {
     window = glfwCreateWindow(640, 480, "a GLFW Window", NULL, NULL);
     glfwMakeContextCurrent(window);
 
+    if (glewInit())
+      std::terminate();
+
     glfwSetWindowUserPointer(window, (void *)this);
     glfwSetKeyCallback(window, _glfw_key_callback);
     glfwSetCursorPosCallback(window, _glfw_cursor_position_callback);
@@ -50,7 +53,79 @@ struct Window : utils::Singleton<Window> {
     if (glfwWindowShouldClose(window))
       on_should_close(*this);
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glLoadIdentity();
+
+    auto cube_pos = glm::vec3(0, 0, -6);
+    auto local = glm::translate(glm::identity<glm::mat4>(), cube_pos);
+    local = glm::translate(local, cube_pos);
+    local =
+        glm::rotate(local, (float)core::Clock::instance().global_time * 16.f,
+                    glm::vec3(0, 1, 0));
+
+    auto view =
+        glm::lookAt(glm::vec3(0, 0, 0), cube_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    auto projection =
+        glm::perspective(.90f, (float)width / height, 0.1f, 100.f);
+    glLoadMatrixf(&(view * projection * local)[0][0]);
+    glViewport(0, 0, width, height);
+    glRotatef(core::Clock::instance().global_time * 12, 1, 0, 1);
+
+    glBegin(GL_POLYGON);
+    glColor3f(1.0, 1.0, 0.0);
+    glVertex3f(0.5, -0.5, -0.5);
+    glVertex3f(0.5, 0.5, -0.5);
+    glVertex3f(-0.5, 0.5, -0.5);
+    glVertex3f(-0.5, -0.5, -0.5);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glColor3f(0.0, 1.0, 1.0);
+    glVertex3f(0.5, -0.5, 0.5);
+    glVertex3f(0.5, 0.5, 0.5);
+    glVertex3f(-0.5, 0.5, 0.5);
+    glVertex3f(-0.5, -0.5, 0.5);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glColor3f(1.0, 0.0, 1.0);
+    glVertex3f(0.5, -0.5, -0.5);
+    glVertex3f(0.5, 0.5, -0.5);
+    glVertex3f(0.5, 0.5, 0.5);
+    glVertex3f(0.5, -0.5, 0.5);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glColor3f(0.0, 1.0, 0.0);
+    glVertex3f(-0.5, -0.5, 0.5);
+    glVertex3f(-0.5, 0.5, 0.5);
+    glVertex3f(-0.5, 0.5, -0.5);
+    glVertex3f(-0.5, -0.5, -0.5);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glColor3f(0.0, 0.0, 1.0);
+    glVertex3f(0.5, 0.5, 0.5);
+    glVertex3f(0.5, 0.5, -0.5);
+    glVertex3f(-0.5, 0.5, -0.5);
+    glVertex3f(-0.5, 0.5, 0.5);
+    glEnd();
+
+    glBegin(GL_POLYGON);
+    glColor3f(1.0, 0.0, 0.0);
+    glVertex3f(0.5, -0.5, -0.5);
+    glVertex3f(0.5, -0.5, 0.5);
+    glVertex3f(-0.5, -0.5, 0.5);
+    glVertex3f(-0.5, -0.5, -0.5);
+    glEnd();
+
+    glFlush();
+
     glfwSwapBuffers(window);
     core::Clock::instance().frame_count++;
     glfwPollEvents();
