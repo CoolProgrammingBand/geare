@@ -10,6 +10,14 @@
 
 namespace geare::windowing {
 
+static constexpr auto off = 1 / (2 * 1.73205080757);
+static const glm::vec3 vertices[3] = {glm::vec3(-.5, -off, 0),
+                                      glm::vec3(.5, -off, 0),
+                                      glm::vec3(0, 1.73205080757 / 2 - off, 0)};
+static const int indices[3] = {0, 1, 2};
+static GLuint vao;
+static GLuint vbo;
+
 struct Window : utils::Singleton<Window> {
   entt::delegate<void(Window &)> on_should_close{[](const void *, Window &) {},
                                                  this};
@@ -42,6 +50,13 @@ struct Window : utils::Singleton<Window> {
     glfwSetCursorPosCallback(window, _glfw_cursor_position_callback);
 
     is_alive = true;
+
+    glBindVertexArray(vao);
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) * sizeof(glm::vec3), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);  
   }
 
   void tick() {
@@ -58,15 +73,14 @@ struct Window : utils::Singleton<Window> {
     glEnable(GL_DEPTH_TEST);
     glLoadIdentity();
 
-    auto cube_pos = glm::vec3(0, 0, -6);
-    auto local = glm::translate(glm::identity<glm::mat4>(), cube_pos);
-    local = glm::translate(local, cube_pos);
-    local =
-        glm::rotate(local, (float)core::Clock::instance().global_time * 16.f,
-                    glm::vec3(0, 1, 0));
+    auto mesh_pos = glm::vec3(0, 1, -6);
+    auto local = glm::translate(glm::identity<glm::mat4>(), mesh_pos);
+    local = glm::translate(local, mesh_pos);
+    local = glm::rotate(local, (float)core::Clock::instance().global_time * 3.f,
+                        glm::vec3(0, 0, 1));
 
     auto view =
-        glm::lookAt(glm::vec3(0, 0, 0), cube_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::lookAt(glm::vec3(0, 0, 0), mesh_pos, glm::vec3(0.0f, 1.0f, 0.0f));
 
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -75,55 +89,9 @@ struct Window : utils::Singleton<Window> {
         glm::perspective(.90f, (float)width / height, 0.1f, 100.f);
     glLoadMatrixf(&(view * projection * local)[0][0]);
     glViewport(0, 0, width, height);
-    glRotatef(core::Clock::instance().global_time * 12, 1, 0, 1);
 
-    glBegin(GL_POLYGON);
-    glColor3f(1.0, 1.0, 0.0);
-    glVertex3f(0.5, -0.5, -0.5);
-    glVertex3f(0.5, 0.5, -0.5);
-    glVertex3f(-0.5, 0.5, -0.5);
-    glVertex3f(-0.5, -0.5, -0.5);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glColor3f(0.0, 1.0, 1.0);
-    glVertex3f(0.5, -0.5, 0.5);
-    glVertex3f(0.5, 0.5, 0.5);
-    glVertex3f(-0.5, 0.5, 0.5);
-    glVertex3f(-0.5, -0.5, 0.5);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glColor3f(1.0, 0.0, 1.0);
-    glVertex3f(0.5, -0.5, -0.5);
-    glVertex3f(0.5, 0.5, -0.5);
-    glVertex3f(0.5, 0.5, 0.5);
-    glVertex3f(0.5, -0.5, 0.5);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glColor3f(0.0, 1.0, 0.0);
-    glVertex3f(-0.5, -0.5, 0.5);
-    glVertex3f(-0.5, 0.5, 0.5);
-    glVertex3f(-0.5, 0.5, -0.5);
-    glVertex3f(-0.5, -0.5, -0.5);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glColor3f(0.0, 0.0, 1.0);
-    glVertex3f(0.5, 0.5, 0.5);
-    glVertex3f(0.5, 0.5, -0.5);
-    glVertex3f(-0.5, 0.5, -0.5);
-    glVertex3f(-0.5, 0.5, 0.5);
-    glEnd();
-
-    glBegin(GL_POLYGON);
-    glColor3f(1.0, 0.0, 0.0);
-    glVertex3f(0.5, -0.5, -0.5);
-    glVertex3f(0.5, -0.5, 0.5);
-    glVertex3f(-0.5, -0.5, 0.5);
-    glVertex3f(-0.5, -0.5, -0.5);
-    glEnd();
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 
     glFlush();
 
