@@ -3,8 +3,9 @@
 
 #include "../core/Clock.hpp"
 #include "../utils/Singleton.hpp"
-#include "entt.hpp"
-#include "glfw.hpp"
+#include <entt.hpp>
+#include <glfw.hpp>
+#include <glm.hpp>
 #include <tuple>
 
 namespace geare::windowing {
