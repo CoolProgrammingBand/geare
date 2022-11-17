@@ -2,6 +2,7 @@
 #define _INCLUDE__GEARE__WINDOWING__WINDOW_
 
 #include "../core/Clock.hpp"
+#include "../graphics/Mesh.hpp"
 #include "../utils/Singleton.hpp"
 #include <entt.hpp>
 #include <glfw.hpp>
@@ -9,15 +10,6 @@
 #include <tuple>
 
 namespace geare::windowing {
-
-static constexpr auto off = 1 / (2 * 1.73205080757);
-static const glm::vec3 vertices[3] = {glm::vec3(-.5, -off, 0),
-                                      glm::vec3(.5, -off, 0),
-                                      glm::vec3(0, 1.73205080757 / 2 - off, 0)};
-static const unsigned indices[3] = {0, 1, 2};
-static GLuint vao;
-static GLuint vbo;
-static GLuint ebo;
 
 struct Window : utils::Singleton<Window> {
   entt::delegate<void(Window &)> on_should_close{[](const void *, Window &) {},
@@ -52,22 +44,25 @@ struct Window : utils::Singleton<Window> {
 
     is_alive = true;
 
-    glBindVertexArray(vao);
-    glGenBuffers(1, &vbo);
+    auto &mesh = graphics::BoxMesh;
 
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) * sizeof(glm::vec3),
-                 vertices, GL_STATIC_DRAW);
+    glBindVertexArray(mesh.vao);
+    glGenBuffers(1, &mesh.vbo);
 
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertex_count * sizeof(glm::vec3),
+                 mesh.vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &mesh.ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 mesh.index_count * sizeof(mesh.indices[0]), mesh.indices,
                  GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                           (void *)0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
   }
 
   void tick() {
@@ -84,11 +79,13 @@ struct Window : utils::Singleton<Window> {
     glEnable(GL_DEPTH_TEST);
     glLoadIdentity();
 
+    auto& mesh = graphics::BoxMesh;
     auto mesh_pos = glm::vec3(0, 1, -6);
     auto local = glm::translate(glm::identity<glm::mat4>(), mesh_pos);
     local = glm::translate(local, mesh_pos);
     local = glm::rotate(local, (float)core::Clock::instance().global_time * 3.f,
                         glm::vec3(0, 1, 1));
+    local = glm::translate(local, glm::vec3(-.5, -.5, -.5));
 
     auto view =
         glm::lookAt(glm::vec3(0, 0, 0), mesh_pos, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -101,8 +98,8 @@ struct Window : utils::Singleton<Window> {
     glLoadMatrixf(&(view * projection * local)[0][0]);
     glViewport(0, 0, width, height);
 
-    glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(mesh.vao);
+    glDrawElements(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 
     glFlush();
