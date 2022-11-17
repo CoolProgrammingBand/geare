@@ -65,7 +65,7 @@ struct Window : utils::Singleton<Window> {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
   }
 
-  void tick() {
+  void tick_begin() {
     if (!is_alive) {
       glfwDestroyWindow(window);
       window = nullptr;
@@ -79,7 +79,7 @@ struct Window : utils::Singleton<Window> {
     glEnable(GL_DEPTH_TEST);
     glLoadIdentity();
 
-    auto& mesh = graphics::BoxMesh;
+    auto &mesh = graphics::BoxMesh;
     auto mesh_pos = glm::vec3(0, 1, -6);
     auto local = glm::translate(glm::identity<glm::mat4>(), mesh_pos);
     local = glm::translate(local, mesh_pos);
@@ -101,7 +101,9 @@ struct Window : utils::Singleton<Window> {
     glBindVertexArray(mesh.vao);
     glDrawElements(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+  }
 
+  void tick_end() {
     glFlush();
 
     glfwSwapBuffers(window);
@@ -144,8 +146,16 @@ protected:
   }
 };
 
-struct WindowSystem : core::System {
-  virtual void tick() override { Window::instance().tick(); }
+struct WindowBeginSystem : core::System {
+  WindowBeginSystem() { this->contract.global_priority = 6; }
+
+  virtual void tick() override { Window::instance().tick_begin(); }
+};
+
+struct WindowEndSystem : core::System {
+  WindowEndSystem() { this->contract.global_priority = -6; }
+
+  virtual void tick() override { Window::instance().tick_end(); }
 };
 
 } // namespace geare::windowing

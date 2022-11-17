@@ -32,7 +32,8 @@ int main(void) {
   auto &window = Window::instance();
 
   scheduler.add_system(new ClockSystem());
-  scheduler.add_system(new WindowSystem());
+  scheduler.add_system(new WindowBeginSystem());
+  scheduler.add_system(new WindowEndSystem());
 
   Inputs::instance().register_keycode('X');
   scheduler.add_system(new FunctionSystem([]() {

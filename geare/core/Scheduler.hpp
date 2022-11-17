@@ -2,12 +2,20 @@
 #define _INCLUDE__GEARE__CORE__SCHEDULER_
 
 #include "System.hpp"
+#include <algorithm>
 #include <vector>
 
 namespace geare::core {
 
 struct Scheduler {
-  void add_system(System *system) { return systems.push_back(system); }
+  void add_system(System *system) {
+    // TODO: more efficient push
+    systems.push_back(system);
+    std::push_heap(
+        systems.begin(), systems.end(), [](const System *a, const System *b) {
+          return a->contract.global_priority < b->contract.global_priority;
+        });
+  }
 
   virtual void tick(entt::registry &registry) {
     for (auto &system : systems) {
