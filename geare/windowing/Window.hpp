@@ -14,9 +14,10 @@ static constexpr auto off = 1 / (2 * 1.73205080757);
 static const glm::vec3 vertices[3] = {glm::vec3(-.5, -off, 0),
                                       glm::vec3(.5, -off, 0),
                                       glm::vec3(0, 1.73205080757 / 2 - off, 0)};
-static const int indices[3] = {0, 1, 2};
+static const unsigned indices[3] = {0, 1, 2};
 static GLuint vao;
 static GLuint vbo;
+static GLuint ebo;
 
 struct Window : utils::Singleton<Window> {
   entt::delegate<void(Window &)> on_should_close{[](const void *, Window &) {},
@@ -53,10 +54,20 @@ struct Window : utils::Singleton<Window> {
 
     glBindVertexArray(vao);
     glGenBuffers(1, &vbo);
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) * sizeof(glm::vec3), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);  
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) * sizeof(glm::vec3),
+                 vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                          (void *)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   }
 
   void tick() {
@@ -77,7 +88,7 @@ struct Window : utils::Singleton<Window> {
     auto local = glm::translate(glm::identity<glm::mat4>(), mesh_pos);
     local = glm::translate(local, mesh_pos);
     local = glm::rotate(local, (float)core::Clock::instance().global_time * 3.f,
-                        glm::vec3(0, 0, 1));
+                        glm::vec3(0, 1, 1));
 
     auto view =
         glm::lookAt(glm::vec3(0, 0, 0), mesh_pos, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -91,7 +102,8 @@ struct Window : utils::Singleton<Window> {
     glViewport(0, 0, width, height);
 
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
 
     glFlush();
 
