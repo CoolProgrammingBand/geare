@@ -12,6 +12,9 @@ struct Clock : utils::Singleton<Clock> {
   double fixed_timestep;
   double global_time;
   unsigned long frame_count;
+
+  double frame_timer;
+  unsigned long fps;
 };
 
 struct ClockSystem : System {
@@ -26,6 +29,13 @@ struct ClockSystem : System {
     clock.global_time = current_tick_time;
     clock.delta_time = current_tick_time - last_tick_time;
     last_tick_time = current_tick_time;
+
+    if (clock.global_time - clock.frame_timer > 1) {
+      clock.fps = clock.frame_count;
+      clock.frame_count = 0;
+      clock.frame_timer = clock.global_time;
+      std::cout << clock.fps << std::endl;
+    }
   }
 
   double last_tick_time = 0;

@@ -13,9 +13,6 @@ struct DownMoverSystem : StaticSystem<Spatial, const Transform> {
       auto &spatial = view.get<Spatial>(entry);
       const auto &transform = view.get<const Transform>(entry);
       spatial.position.y -= 1;
-      std::osyncstream{std::cout} << spatial << std::endl
-                                  << transform
-                                  << std::endl;
     }
   }
 };
