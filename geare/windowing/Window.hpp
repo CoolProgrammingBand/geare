@@ -34,6 +34,7 @@ struct Window : utils::Singleton<Window> {
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     window = glfwCreateWindow(640, 480, "a GLFW Window", NULL, NULL);
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(0);
 
     if (glewInit())
       std::terminate();
