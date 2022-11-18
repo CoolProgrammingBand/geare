@@ -7,6 +7,7 @@
 #include <entt.hpp>
 #include <glfw.hpp>
 #include <glm.hpp>
+#include <iostream>
 #include <tuple>
 
 namespace geare::windowing {
@@ -46,6 +47,13 @@ struct Window : utils::Singleton<Window> {
     is_alive = true;
 
     auto &mesh = graphics::BoxMesh;
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(_opengl_message_callback, nullptr);
+
+    const char debug_handler_running_report[] = "Debug message handler running";
+    glDebugMessageInsert(GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_TYPE_OTHER, 11,
+                         GL_DEBUG_SEVERITY_NOTIFICATION, 14, &debug_handler_running_report[0]);
 
     glBindVertexArray(mesh.vao);
     glGenBuffers(1, &mesh.vbo);
@@ -144,6 +152,17 @@ protected:
     window.cursor_x = x;
     window.cursor_y = y;
     window.on_cursor_move(x, y);
+  }
+
+  static void GLAPIENTRY _opengl_message_callback(GLenum source, GLenum type,
+                                                  GLuint id, GLenum severity,
+                                                  GLsizei length,
+                                                  const GLchar *message,
+                                                  const void *userParam) {
+    fprintf(stderr,
+            "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+            (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type,
+            severity, message);
   }
 };
 
