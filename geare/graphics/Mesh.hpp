@@ -38,14 +38,14 @@ static Mesh BoxMesh = {
     .vertex_count = 8,
     .vertices =
         new glm::vec3[8]{
-            glm::vec3(0, 0, 0),
-            glm::vec3(1, 0, 0),
-            glm::vec3(1, 0, 1),
-            glm::vec3(0, 0, 1),
-            glm::vec3(0, 1, 0),
-            glm::vec3(1, 1, 0),
-            glm::vec3(1, 1, 1),
-            glm::vec3(0, 1, 1),
+            glm::vec3(-.5, -.5, -.5),
+            glm::vec3(0.5, -.5, -.5),
+            glm::vec3(0.5, -.5, 0.5),
+            glm::vec3(-.5, -.5, 0.5),
+            glm::vec3(-.5, 0.5, -.5),
+            glm::vec3(0.5, 0.5, -.5),
+            glm::vec3(0.5, 0.5, 0.5),
+            glm::vec3(-.5, 0.5, 0.5),
         },
     .index_count = 36,
     .indices =

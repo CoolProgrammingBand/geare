@@ -9,12 +9,14 @@ using namespace geare::windowing;
 using namespace geare::core;
 using namespace geare::graphics;
 
-struct DownMoverSystem : StaticSystem<Spatial, const Transform> {
-  virtual void tick(DownMoverSystem::view_t &view) override {
+struct SpinnerSystem : StaticSystem<Transform> {
+  virtual void tick(view_t &view) override {
     for (auto &entry : view) {
-      auto &spatial = view.get<Spatial>(entry);
-      const auto &transform = view.get<const Transform>(entry);
-      spatial.position.y -= 1;
+      auto &transform = view.get<Transform>(entry);
+      transform.rotation.y += Clock::instance().delta_time;
+      transform.rotation.x += Clock::instance().delta_time / 2;
+      transform.scale = glm::one<glm::vec3>() *
+                        (sinf((float)Clock::instance().global_time) + 1) / 2.f;
     }
   }
 };
@@ -37,6 +39,7 @@ int main(void) {
   scheduler.add_system(new WindowEndSystem());
   scheduler.add_system(new GeometryCollectionSystem());
   scheduler.add_system(new RendererSystem());
+  scheduler.add_system(new TransformRefresherSystem());
 
   Inputs::instance().register_keycode('X');
   scheduler.add_system(new FunctionSystem([]() {
@@ -49,7 +52,7 @@ int main(void) {
     }
   }));
 
-  scheduler.add_system(new DownMoverSystem());
+  scheduler.add_system(new SpinnerSystem());
   scheduler.add_system(new InputSystem());
 
   window.show();

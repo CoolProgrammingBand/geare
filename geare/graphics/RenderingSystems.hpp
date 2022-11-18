@@ -1,6 +1,7 @@
 #ifndef _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
 #define _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
 
+#include "../core/Components.hpp"
 #include "../core/System.hpp"
 #include "../windowing/Window.hpp"
 #include "./MeshRenderer.hpp"
@@ -43,7 +44,8 @@ struct GeometryCollectionSystem : core::StaticSystem<MeshRenderer> {
   }
 };
 
-struct RendererSystem : core::StaticSystem<MeshRenderer> {
+struct RendererSystem
+    : core::StaticSystem<MeshRenderer, const core::Transform> {
   virtual void tick(view_t &view) override final {
     int width, height;
     glfwGetFramebufferSize(windowing::Window::instance().window, &width,
@@ -53,15 +55,14 @@ struct RendererSystem : core::StaticSystem<MeshRenderer> {
 
     for (auto &e : view) {
       auto &mesh_renderer = view.get<MeshRenderer>(e);
+      auto &transform = view.get<const core::Transform>(e);
+
       auto &mesh = *mesh_renderer.mesh;
       auto mesh_pos = glm::vec3(0, 1, -6);
 
       auto local = glm::translate(glm::identity<glm::mat4>(), mesh_pos);
       local = glm::translate(local, mesh_pos);
-      local =
-          glm::rotate(local, (float)core::Clock::instance().global_time * 3.f,
-                      glm::vec3(0, 1, 1));
-      local = glm::translate(local, glm::vec3(-.5, -.5, -.5));
+      local = local * transform.mat;
 
       auto view = glm::lookAt(glm::vec3(0, 0, 0), mesh_pos,
                               glm::vec3(0.0f, 1.0f, 0.0f));

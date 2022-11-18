@@ -5,3 +5,4 @@
 #include "./core/Components.hpp"
 #include "./core/Scene.hpp"
 #include "./core/World.hpp"
+#include "./core/TransformRefresher.hpp"

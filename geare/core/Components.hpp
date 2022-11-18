@@ -24,6 +24,14 @@ struct Transform final {
   glm::vec3 rotation;
   glm::vec3 scale;
 
+  bool is_dirty = true;
+  glm::mat4 mat;
+
+  void refresh() {
+    glm::mat4 rot = glm::eulerAngleYXZ(rotation.y, rotation.x, rotation.z);
+    mat = glm::scale(rot, scale);
+  }
+
   explicit Transform(glm::vec3 rotation = glm::vec3(0, 0, 0),
                      glm::vec3 scale = glm::vec3(1, 1, 1))
       : rotation(rotation), scale(scale) {}
