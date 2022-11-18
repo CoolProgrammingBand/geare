@@ -1,68 +1,79 @@
-#include <iostream>
-#include <syncstream>
+#include <algorithm>
+#include <set>
+#include <vector>
 
-#include "./geare/core.hpp"
-#include "./geare/windowing.hpp"
+using namespace std;
 
-using namespace geare::windowing;
-using namespace geare::core;
+using ThreadID = unsigned;
+using ComponentID = unsigned;
 
-struct DownMoverSystem : StaticSystem<Spatial, const Transform> {
-  virtual void tick(DownMoverSystem::view_t &view) override {
-    for (auto &entry : view) {
-      auto &spatial = view.get<Spatial>(entry);
-      const auto &transform = view.get<const Transform>(entry);
-      spatial.position.y -= 1;
-      std::osyncstream{std::cout} << spatial << std::endl
-                                  << transform
-                                  << std::endl;
-    }
-  }
+// is_main_threaded, priority, mut_components, const_components
+
+struct System;
+
+struct Thread {
+  System *active_system = nullptr;
+  ThreadID id;
+
+  void assign_system(System *system) { active_system = system; }
 };
 
+struct System {
+  bool is_main_threaded;
+  int priority; // computed somewhere
+  std::set<ComponentID> mut_components;
+  std::set<ComponentID> const_components;
+};
+
+bool comp(const System &a, const System &b) {
+  // is_main_threaded -> priority -> mut_components -> const_components
+  if (a.is_main_threaded && b.is_main_threaded)
+    return a.priority < b.priority; // check sign
+
+  if (a.is_main_threaded)
+    return false;
+  if (b.is_main_threaded)
+    return true;
+
+  return a.priority < b.priority; // check sign
+}
+
 int main(void) {
-  auto world = World();
-  auto &scheduler = world.scheduler;
+  vector<System> systems;
 
-  auto &root_scene = world.active_scene;
-  auto some_entity = root_scene.create();
-  root_scene.emplace<Spatial>(some_entity, Spatial());
-  root_scene.emplace<Transform>(some_entity, Transform());
+  sort(systems.begin(), systems.end(), comp); //nlogn
 
-  auto &window = Window::instance();
+  vector<Thread> threads = {{.id = 0}, {.id = 1}};
 
-  scheduler.add_system(new ClockSystem());
-  scheduler.add_system(new WindowSystem());
+  set<ComponentID> cur_mut_components = systems[0].mut_components;
+  set<ComponentID> cur_const_components = systems[0].const_components;
+  int cur_sys_i = 0;
+  threads[0].assign_system(&systems[0]);
 
-  Inputs::instance().register_keycode('X');
-  scheduler.add_system(new FunctionSystem([]() {
-    if (Inputs::instance().is_key_down('X')) {
-      std::cout << "X key pressed!" << std::endl;
-    } else if (Inputs::instance().is_key_up('X')) {
-      std::cout << "X key released!" << std::endl;
-    } else if (Inputs::instance().is_key_held('X')) {
-      std::cout << "X key held!" << std::endl;
+  while (systems[cur_sys_i++].is_main_threaded)
+    ;
+
+  // Initial distribution of systems
+  for (int thread_i = 1;
+       thread_i < threads.size() && cur_sys_i < systems.size();) { //m
+
+    bool isOk = true;
+    for (auto &mut_comp : systems[cur_sys_i].mut_components) { // M
+      auto is_used_as_const = cur_const_components.contains(mut_comp);
+      auto is_used_as_mut = cur_mut_components.contains(mut_comp);
+      isOk &= !(is_used_as_mut || is_used_as_const);
     }
-  }));
 
-  scheduler.add_system(new DownMoverSystem());
-  scheduler.add_system(new InputSystem());
+    for (auto &const_comp : systems[cur_sys_i].const_components) // M
+      isOk &= !cur_mut_components.contains(const_comp);
 
-  window.show();
-
-  window.on_should_close.connect([](const void *_, Window &window) {
-    std::cout << "Should close triggered." << std::endl;
-    window.close();
-  });
-
-  window.on_key_press.connect(
-      [](const void *_, int key, int scancode, int action, int mods) {
-        _glfw_keypress_adapter(key, scancode, action, mods);
-      });
-
-  while (window.is_alive) {
-    scheduler.tick(world.active_scene);
+    if (!isOk) {
+      // Skip to next system
+      ++cur_sys_i;
+    } else {
+      threads[thread_i++].assign_system(&systems[cur_sys_i++]);
+    }
   }
 
   return 0;
-}
+} //nlogn + m*MlogM*logM + O(1)
