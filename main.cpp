@@ -5,11 +5,13 @@
 #include "./geare/core.hpp"
 #include "./geare/graphics.hpp"
 #include "./geare/windowing.hpp"
+#include "./geare/utils.hpp"
 
 using namespace geare::windowing;
 using namespace geare::core;
 using namespace geare::graphics;
 using namespace geare::base;
+using namespace geare::utils;
 
 struct SpinnerSystem : StaticSystem<Transform> {
   virtual void tick(view_t &view) override {
@@ -29,6 +31,14 @@ struct SpinnerSystem : StaticSystem<Transform> {
 };
 
 int main(void) {
+  {
+    auto arena = Arena<>();
+
+    auto bytes = arena.allocate_raw(4);
+
+    arena.clear();
+  }
+
   auto world = World();
   auto &scheduler = world.scheduler;
 
