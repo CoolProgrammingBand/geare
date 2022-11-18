@@ -60,16 +60,12 @@ struct RendererSystem
       auto &mesh = *mesh_renderer.mesh;
       auto mesh_pos = glm::vec3(0, 1, -6);
 
-      auto local = glm::translate(glm::identity<glm::mat4>(), mesh_pos);
-      local = glm::translate(local, mesh_pos);
-      local = local * transform.mat;
-
       auto view = glm::lookAt(glm::vec3(0, 0, 0), mesh_pos,
                               glm::vec3(0.0f, 1.0f, 0.0f));
 
       auto projection =
           glm::perspective(.90f, (float)width / height, 0.1f, 100.f);
-      glLoadMatrixf(&(view * projection * local)[0][0]);
+      glLoadMatrixf(&(view * projection * transform.mat)[0][0]);
 
       glBindVertexArray(mesh_renderer.vao);
       glDrawElements(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, 0);

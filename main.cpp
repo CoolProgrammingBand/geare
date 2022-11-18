@@ -15,7 +15,8 @@ struct SpinnerSystem : StaticSystem<Transform> {
   virtual void tick(view_t &view) override {
     for (auto &entry : view) {
       auto &transform = view.get<Transform>(entry);
-      transform.rotation.y += Clock::instance().delta_time;
+      transform.rotation.y +=
+          Clock::instance().delta_time * pow(-1, (int)entry);
       transform.rotation.x += Clock::instance().delta_time / 2;
       transform.scale = glm::one<glm::vec3>() *
                         (sinf((float)Clock::instance().global_time) + 1) / 2.f;
@@ -29,10 +30,16 @@ int main(void) {
 
   auto &root_scene = world.active_scene;
   auto some_entity = root_scene.create();
+  auto another_entity = root_scene.create();
 
   root_scene.emplace<MeshRenderer>(some_entity, MeshRenderer());
-  root_scene.emplace<Spatial>(some_entity, Spatial());
   root_scene.emplace<Transform>(some_entity, Transform());
+
+  root_scene.emplace<MeshRenderer>(another_entity, MeshRenderer());
+  root_scene.emplace<Transform>(another_entity, Transform());
+
+  root_scene.get<Transform>(some_entity).position = glm::vec3(0, 1, -6);
+  root_scene.get<Transform>(another_entity).position = glm::vec3(0, -1, -6);
 
   auto &window = Window::instance();
 
