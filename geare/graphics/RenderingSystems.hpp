@@ -63,7 +63,7 @@ struct RendererSystem
                               glm::vec3(0.0f, 1.0f, 0.0f));
 
       auto projection =
-          glm::perspective(.90f, (float)width / height, 0.1f, 100.f);
+          glm::perspective(90.f, (float)width / height, 0.1f, 100.f);
       glLoadMatrixf(&(view * projection * transform.mat)[0][0]);
 
       glBindVertexArray(mesh_renderer.vao);
