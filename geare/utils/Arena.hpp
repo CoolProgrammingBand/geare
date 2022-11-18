@@ -30,23 +30,6 @@ struct Arena final {
     virtual ~_NonTriviallyDestructibleHandle() {}
   };
 
-  template <typename T>
-  struct _NonTriviallyDestructibleInner : _NonTriviallyDestructibleHandle {
-    _NonTriviallyDestructibleInner(T &&v) : data(v) {}
-    _NonTriviallyDestructibleInner(const T &v) : data(v) {}
-
-    ~_NonTriviallyDestructibleInner() override {}
-
-    T data;
-  };
-
-  FallbackAllocator fallback_allocator;
-  std::vector<_NonTriviallyDestructibleHandle *> destructor_handles;
-  std::byte filler_byte = (std::byte)0xDD;
-  std::byte *blob;
-  std::byte *top;
-  std::size_t max_capacity;
-
   bool can_allocate(std::size_t size) {
     return ((std::size_t)top + size) <= (std::size_t)(blob + max_capacity);
   }
@@ -64,9 +47,12 @@ struct Arena final {
       return nullptr;
     new (raw) T();
 
-    auto *handle = allocate_raw<_NonTriviallyDestructibleInner<T>>();
-    new (handle) _NonTriviallyDestructibleInner<T>(*raw);
-    destructor_handles.push_back(handle);
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+      auto *handle = allocate_raw<_NonTriviallyDestructibleInner<T>>();
+      new (handle) _NonTriviallyDestructibleInner<T>(*raw);
+      destructor_handles.push_back(handle);
+    }
+
     return raw;
   }
 
@@ -76,9 +62,12 @@ struct Arena final {
       return nullptr;
     new (raw) T(value);
 
-    auto *handle = allocate_raw(sizeof(_NonTriviallyDestructibleInner<T>));
-    new (handle) _NonTriviallyDestructibleInner<T>(*raw);
-    destructor_handles.push_back(handle);
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+      auto *handle = allocate_raw(sizeof(_NonTriviallyDestructibleInner<T>));
+      new (handle) _NonTriviallyDestructibleInner<T>(*raw);
+      destructor_handles.push_back(handle);
+    }
+
     return raw;
   }
 
@@ -88,9 +77,12 @@ struct Arena final {
       return nullptr;
     new (raw) T();
 
-    auto *handle = allocate_raw(sizeof(_NonTriviallyDestructibleInner<T>));
-    new (handle) _NonTriviallyDestructibleInner<T>(*raw);
-    destructor_handles.push_back(handle);
+    if constexpr (!std::is_trivially_destructible_v<T>) {
+      auto *handle = allocate_raw(sizeof(_NonTriviallyDestructibleInner<T>));
+      new (handle) _NonTriviallyDestructibleInner<T>(*raw);
+      destructor_handles.push_back(handle);
+    }
+
     return raw;
   }
 
@@ -107,6 +99,24 @@ struct Arena final {
   template <typename T> T *allocate_raw() {
     return (T *)allocate_raw(sizeof(T));
   }
+
+protected:
+  template <typename T>
+  struct _NonTriviallyDestructibleInner : _NonTriviallyDestructibleHandle {
+    _NonTriviallyDestructibleInner(T &&v) : data(v) {}
+    _NonTriviallyDestructibleInner(const T &v) : data(v) {}
+
+    ~_NonTriviallyDestructibleInner() override {}
+
+    T data;
+  };
+
+  FallbackAllocator fallback_allocator;
+  std::vector<_NonTriviallyDestructibleHandle *> destructor_handles;
+  std::byte filler_byte = (std::byte)0xDD;
+  std::byte *blob;
+  std::byte *top;
+  std::size_t max_capacity;
 };
 
 } // namespace geare::utils
