@@ -1,6 +1,7 @@
 #include <iostream>
 #include <syncstream>
 
+#include "./geare/base.hpp"
 #include "./geare/core.hpp"
 #include "./geare/graphics.hpp"
 #include "./geare/windowing.hpp"
@@ -8,6 +9,7 @@
 using namespace geare::windowing;
 using namespace geare::core;
 using namespace geare::graphics;
+using namespace geare::base;
 
 struct SpinnerSystem : StaticSystem<Transform> {
   virtual void tick(view_t &view) override {

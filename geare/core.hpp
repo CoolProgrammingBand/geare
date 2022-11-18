@@ -1,8 +1,5 @@
-#include "./core/Clock.hpp"
 #include "./core/Inputs.hpp"
 #include "./core/Scheduler.hpp"
 #include "./core/System.hpp"
-#include "./core/Components.hpp"
 #include "./core/Scene.hpp"
 #include "./core/World.hpp"
-#include "./core/TransformRefresher.hpp"

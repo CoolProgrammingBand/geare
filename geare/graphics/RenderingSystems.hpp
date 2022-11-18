@@ -1,7 +1,7 @@
 #ifndef _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
 #define _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
 
-#include "../core/Components.hpp"
+#include "../base/Transform.hpp"
 #include "../core/System.hpp"
 #include "../windowing/Window.hpp"
 #include "./MeshRenderer.hpp"
@@ -45,7 +45,7 @@ struct GeometryCollectionSystem : core::StaticSystem<MeshRenderer> {
 };
 
 struct RendererSystem
-    : core::StaticSystem<MeshRenderer, const core::Transform> {
+    : core::StaticSystem<MeshRenderer, const base::Transform> {
   virtual void tick(view_t &view) override final {
     int width, height;
     glfwGetFramebufferSize(windowing::Window::instance().window, &width,
@@ -55,7 +55,7 @@ struct RendererSystem
 
     for (auto &e : view) {
       auto &mesh_renderer = view.get<MeshRenderer>(e);
-      auto &transform = view.get<const core::Transform>(e);
+      auto &transform = view.get<const base::Transform>(e);
 
       auto &mesh = *mesh_renderer.mesh;
       auto mesh_pos = glm::vec3(0, 1, -6);

@@ -1,11 +1,11 @@
-#ifndef _INCLUDE__GEARE__CORE__CLOCK_
-#define _INCLUDE__GEARE__CORE__CLOCK_
+#ifndef _INCLUDE__GEARE__BASE__CLOCK_
+#define _INCLUDE__GEARE__BASE__CLOCK_
 
+#include "../core/System.hpp"
 #include "../utils/Singleton.hpp"
-#include "System.hpp"
 #include "glfw.hpp"
 
-namespace geare::core {
+namespace geare::base {
 
 struct Clock : utils::Singleton<Clock> {
   double delta_time;
@@ -17,14 +17,14 @@ struct Clock : utils::Singleton<Clock> {
   unsigned long fps;
 };
 
-struct ClockSystem : System {
+struct ClockSystem : core::System {
   ClockSystem() {
     contract.call_only_on_main = false;
     contract.global_priority = INT32_MAX;
   }
 
   virtual void tick() override {
-    auto &clock = core::Clock::instance();
+    auto &clock = Clock::instance();
     double current_tick_time = glfwGetTime();
     clock.global_time = current_tick_time;
     clock.delta_time = current_tick_time - last_tick_time;
@@ -41,6 +41,6 @@ struct ClockSystem : System {
   double last_tick_time = 0;
 };
 
-} // namespace geare::core
+} // namespace geare::base
 
 #endif

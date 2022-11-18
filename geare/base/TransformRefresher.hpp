@@ -1,13 +1,13 @@
-#ifndef _INCLUDE__GEARE__CORE__TRANSFORM_REFRESHER_
-#define _INCLUDE__GEARE__CORE__TRANSFORM_REFRESHER_
+#ifndef _INCLUDE__GEARE__BASE__TRANSFORM_REFRESHER_
+#define _INCLUDE__GEARE__BASE__TRANSFORM_REFRESHER_
 
-#include "./Components.hpp"
-#include "./System.hpp"
+#include "../core/System.hpp"
+#include "./Transform.hpp"
 #include <glm.hpp>
 
-namespace geare::core {
+namespace geare::base {
 
-struct TransformRefresherSystem : StaticSystem<Transform> {
+struct TransformRefresherSystem : core::StaticSystem<Transform> {
   TransformRefresherSystem() { this->contract.global_priority = -5; }
 
   virtual void tick(view_t &view) final {
@@ -19,6 +19,6 @@ struct TransformRefresherSystem : StaticSystem<Transform> {
   }
 };
 
-} // namespace geare::core
+} // namespace geare::base
 
 #endif

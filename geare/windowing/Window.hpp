@@ -1,7 +1,7 @@
 #ifndef _INCLUDE__GEARE__WINDOWING__WINDOW_
 #define _INCLUDE__GEARE__WINDOWING__WINDOW_
 
-#include "../core/Clock.hpp"
+#include "../base/Clock.hpp"
 #include "../graphics/Mesh.hpp"
 #include "../utils/Singleton.hpp"
 #include <entt.hpp>
@@ -71,7 +71,7 @@ struct Window : utils::Singleton<Window> {
 
   void tick_end() {
     glfwSwapBuffers(window);
-    core::Clock::instance().frame_count++;
+    base::Clock::instance().frame_count++;
     glfwPollEvents();
   }
 
