@@ -47,8 +47,6 @@ struct Window : utils::Singleton<Window> {
 
     is_alive = true;
 
-    auto &mesh = graphics::BoxMesh;
-
     glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEPTH_TEST);

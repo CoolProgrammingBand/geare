@@ -35,7 +35,6 @@ struct Mesh {
 */
 
 static Mesh BoxMesh = {
-    .vertex_count = 8,
     .vertices =
         new glm::vec3[8]{
             glm::vec3(-.5, -.5, -.5),
@@ -47,7 +46,7 @@ static Mesh BoxMesh = {
             glm::vec3(0.5, 0.5, 0.5),
             glm::vec3(-.5, 0.5, 0.5),
         },
-    .index_count = 36,
+    .vertex_count = 8,
     .indices =
         new unsigned[36]{
             0, 1, 2, 2, 3, 0,
@@ -62,6 +61,7 @@ static Mesh BoxMesh = {
 
             6, 5, 1, 1, 2, 6,
         },
+    .index_count = 36,
 };
 
 } // namespace geare::graphics

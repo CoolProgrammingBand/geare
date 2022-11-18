@@ -34,13 +34,15 @@ struct System {
   virtual void tick(std::byte *ptr) {}
   virtual void tick() { return tick(nullptr); }
 
-  ~System() { contract.~SystemContract(); }
+  virtual ~System() { contract.~SystemContract(); }
 protected:
   System() {}
 };
 
 // TODO: test this
 template <typename... Ts> struct StaticSystem : System {
+  using System::tick;
+
   StaticSystem() {
     this->contract.captured_component_count = sizeof...(Ts);
     this->contract.component_ids =
