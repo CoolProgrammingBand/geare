@@ -32,6 +32,7 @@ struct Window : utils::Singleton<Window> {
     if (!glfwInit())
       std::terminate();
 
+    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     window = glfwCreateWindow(640, 480, "a GLFW Window", NULL, NULL);
     glfwMakeContextCurrent(window);
@@ -48,6 +49,7 @@ struct Window : utils::Singleton<Window> {
 
     auto &mesh = graphics::BoxMesh;
 
+    glEnable(GL_MULTISAMPLE);
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEPTH_TEST);
     glDebugMessageCallback(_opengl_message_callback, nullptr);
