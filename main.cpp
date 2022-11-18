@@ -4,12 +4,14 @@
 #include "./geare/base.hpp"
 #include "./geare/core.hpp"
 #include "./geare/graphics.hpp"
+#include "./geare/utils.hpp"
 #include "./geare/windowing.hpp"
 
 using namespace geare::windowing;
 using namespace geare::core;
 using namespace geare::graphics;
 using namespace geare::base;
+using namespace geare::utils;
 
 struct SpinnerSystem : StaticSystem<Transform> {
   virtual void tick(view_t &view) override {
@@ -21,14 +23,36 @@ struct SpinnerSystem : StaticSystem<Transform> {
       transform.scale = glm::one<glm::vec3>() * .5f *
                         (sinf((float)Clock::instance().global_time) + 1) / 2.f;
 
-      transform.position =
-          glm::vec3(sinf(pow(.5f, (int)entry) * 4 * (float)Clock::instance().global_time),
-                    cosf(pow(.5f, (int)entry) * 4 * (float)Clock::instance().global_time), -7);
+      transform.position = glm::vec3(
+          sinf(pow(.5f, (int)entry) * 4 * (float)Clock::instance().global_time),
+          cosf(pow(.5f, (int)entry) * 4 * (float)Clock::instance().global_time),
+          -7);
     }
   }
 };
 
+static int was_really_destroyed = false;
+
 int main(void) {
+  {
+    auto arena = Arena<>();
+
+    struct NonTriviallyDestructible {
+      virtual ~NonTriviallyDestructible() {
+        was_really_destroyed++;
+      }
+    };
+
+    static_assert(!std::is_trivially_destructible_v<NonTriviallyDestructible>);
+
+    auto bytes = arena.allocate_raw(4);
+    auto throwaway = arena.allocate<NonTriviallyDestructible>();
+
+    arena.clear();
+
+    std::cout << std::boolalpha << was_really_destroyed << std::endl;
+  }
+
   auto world = World();
   auto &scheduler = world.scheduler;
 
