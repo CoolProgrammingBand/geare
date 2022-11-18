@@ -13,10 +13,6 @@ struct Mesh {
 
   unsigned *indices;
   std::size_t index_count;
-
-  GLuint vao = 0;
-  GLuint vbo = 0;
-  GLuint ebo = 0;
 };
 
 /*

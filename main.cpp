@@ -2,10 +2,12 @@
 #include <syncstream>
 
 #include "./geare/core.hpp"
+#include "./geare/graphics.hpp"
 #include "./geare/windowing.hpp"
 
 using namespace geare::windowing;
 using namespace geare::core;
+using namespace geare::graphics;
 
 struct DownMoverSystem : StaticSystem<Spatial, const Transform> {
   virtual void tick(DownMoverSystem::view_t &view) override {
@@ -23,6 +25,8 @@ int main(void) {
 
   auto &root_scene = world.active_scene;
   auto some_entity = root_scene.create();
+
+  root_scene.emplace<MeshRenderer>(some_entity, MeshRenderer());
   root_scene.emplace<Spatial>(some_entity, Spatial());
   root_scene.emplace<Transform>(some_entity, Transform());
 
@@ -31,6 +35,8 @@ int main(void) {
   scheduler.add_system(new ClockSystem());
   scheduler.add_system(new WindowBeginSystem());
   scheduler.add_system(new WindowEndSystem());
+  scheduler.add_system(new GeometryCollectionSystem());
+  scheduler.add_system(new RendererSystem());
 
   Inputs::instance().register_keycode('X');
   scheduler.add_system(new FunctionSystem([]() {
