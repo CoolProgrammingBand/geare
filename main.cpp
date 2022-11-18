@@ -18,8 +18,12 @@ struct SpinnerSystem : StaticSystem<Transform> {
       transform.rotation.y +=
           Clock::instance().delta_time * pow(-1, (int)entry);
       transform.rotation.x += Clock::instance().delta_time / 2;
-      transform.scale = glm::one<glm::vec3>() *
+      transform.scale = glm::one<glm::vec3>() * .5f *
                         (sinf((float)Clock::instance().global_time) + 1) / 2.f;
+
+      transform.position =
+          glm::vec3(sinf(pow(.5f, (int)entry) * 4 * (float)Clock::instance().global_time),
+                    cosf(pow(.5f, (int)entry) * 4 * (float)Clock::instance().global_time), -7);
     }
   }
 };

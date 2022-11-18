@@ -58,9 +58,8 @@ struct RendererSystem
       auto &transform = view.get<const base::Transform>(e);
 
       auto &mesh = *mesh_renderer.mesh;
-      auto mesh_pos = glm::vec3(0, 1, -6);
 
-      auto view = glm::lookAt(glm::vec3(0, 0, 0), mesh_pos,
+      auto view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -6),
                               glm::vec3(0.0f, 1.0f, 0.0f));
 
       auto projection =
