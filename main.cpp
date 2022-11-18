@@ -31,7 +31,7 @@ struct SpinnerSystem : StaticSystem<Transform> {
   }
 };
 
-static bool was_really_destroyed = false;
+static int was_really_destroyed = false;
 
 int main(void) {
   {
@@ -39,7 +39,7 @@ int main(void) {
 
     struct NonTriviallyDestructible {
       virtual ~NonTriviallyDestructible() {
-        was_really_destroyed = true;
+        was_really_destroyed++;
       }
     };
 

@@ -35,7 +35,8 @@ struct Arena final {
     _NonTriviallyDestructibleInner(T &&v) : data(v) {}
     _NonTriviallyDestructibleInner(const T &v) : data(v) {}
 
-    virtual ~_NonTriviallyDestructibleInner() override { data.~T(); }
+    ~_NonTriviallyDestructibleInner() override {}
+
     T data;
   };
 
