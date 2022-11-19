@@ -16,9 +16,10 @@ struct Transform final {
   glm::mat4 mat;
 
   void refresh() {
+    glm::mat4 scalar = glm::scale(glm::identity<glm::mat4>(), scale);
     glm::mat4 translate = glm::translate(glm::identity<glm::mat4>(), position);
     glm::mat4 rot = glm::eulerAngleYXZ(rotation.y, rotation.x, rotation.z);
-    mat = glm::scale(translate * rot, scale);
+    mat = translate * rot * scalar;
   }
 
   explicit Transform(glm::vec3 rotation = glm::vec3(0, 0, 0),
