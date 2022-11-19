@@ -13,7 +13,7 @@ using namespace geare::graphics;
 using namespace geare::base;
 using namespace geare::utils;
 
-struct SpinnerSystem : StaticSystem<Transform> {
+struct SpinnerSystem : StaticSystem<Transform, MeshRenderer> {
   virtual void tick(view_t &view) override {
     for (auto &entry : view) {
       auto &transform = view.get<Transform>(entry);
@@ -70,7 +70,8 @@ int main(void) {
 
   root_scene.get<Transform>(some_entity).position = glm::vec3(0, 1, -6);
   root_scene.get<Transform>(another_entity).position = glm::vec3(0, -1, -6);
-  root_scene.get<Transform>(camera_entity).position = glm::vec3(0, 0, 0);
+  root_scene.get<Transform>(camera_entity).position = glm::vec3(0, -6, 0);
+  root_scene.get<Transform>(camera_entity).rotation = glm::vec3(0, 0, 1.67f);
 
   auto &window = Window::instance();
 
