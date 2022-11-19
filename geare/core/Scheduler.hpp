@@ -15,16 +15,16 @@ struct Scheduler {
         systems.begin(), systems.end(), [](const System *a, const System *b) {
           return a->contract.global_priority < b->contract.global_priority;
         });
+    max_view_size = std::max(system->view_size, max_view_size);
   }
 
   virtual void tick(entt::registry &registry) {
+    auto *view = (std::byte *)alloca(max_view_size);
     for (auto &system : systems) {
+
       auto &contract = system->contract;
 
       if (contract.captured_component_count > 0) {
-        // XXX: dangerous, alloca may stackoverflow
-        // It shouldn't, but it may. Fix that.
-        auto *view = (std::byte *)alloca(system->view_size);
         system->create_component_view(registry, view);
         system->tick(view);
       } else {
@@ -39,6 +39,7 @@ struct Scheduler {
   }
 
 protected:
+  std::size_t max_view_size = 0;
   std::vector<System *> systems;
 };
 
