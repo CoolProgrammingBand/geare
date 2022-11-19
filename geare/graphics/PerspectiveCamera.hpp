@@ -3,7 +3,7 @@
 
 #include "../base/Transform.hpp"
 #include "../core/System.hpp"
-#include "./RenderingSystems.hpp"
+#include "./RenderDataCollectionSystem.hpp"
 
 namespace geare::graphics {
 
@@ -31,22 +31,24 @@ struct PerspectiveCameraSystem
       glm::mat4 camera_rotation = glm::eulerAngleYXZ(
           transform.rotation.y, transform.rotation.x, transform.rotation.z);
 
-      auto view =
-          camera_rotation *
-          glm::translate(glm::identity<glm::mat4>(), -transform.position);
+      auto view = camera_rotation * glm::translate(glm::identity<glm::mat4>(),
+                                                   -transform.position);
 
       auto projection = glm::perspective(camera.fov, (float)width / height,
                                          camera.near_plane, camera.far_plane);
 
-      for (int i = 0; i < vao__index_count__mat4___size; i++) {
-        auto &[vao, index_count, transform] = vao__index_count__mat4[i];
+      for (int i = 0; i < raw_render_data_size; i++) {
+        auto &render_data = raw_render_data[i];
+        auto transform = render_data.model_mat;
+
         glLoadMatrixf(&(projection * view * transform)[0][0]);
-        glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(render_data.vao);
+        glDrawElements(GL_TRIANGLES, render_data.index_count, GL_UNSIGNED_INT,
+                       0);
       }
     }
 
-    transformed_meshes_arena.clear();
+    raw_render_data_arena.clear();
     glFlush();
   }
 };

@@ -1,13 +1,8 @@
-#ifndef _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
-#define _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
+#ifndef _INCLUDE__GEARE__GRAPHICS__GEOMETRY_COLLECTION_SYSTEM_
+#define _INCLUDE__GEARE__GRAPHICS__GEOMETRY_COLLECTION_SYSTEM_
 
-#include "../base/Transform.hpp"
 #include "../core/System.hpp"
-#include "../utils/Arena.hpp"
-#include "../windowing/Window.hpp"
 #include "./MeshRenderer.hpp"
-#include <glfw.hpp>
-#include <glm.hpp>
 
 namespace geare::graphics {
 
@@ -41,36 +36,6 @@ struct GeometryCollectionSystem : core::StaticSystem<MeshRenderer> {
 
         mesh_renderer.is_dirty = false;
       }
-    }
-  }
-};
-
-static utils::Arena<> transformed_meshes_arena;
-using intermediate_data_t = std::tuple<GLuint, std::size_t, glm::mat4>;
-static intermediate_data_t *vao__index_count__mat4;
-static std::size_t vao__index_count__mat4___size;
-
-struct PerFrameMeshTransformGenerator
-    : core::StaticSystem<MeshRenderer, const base::Transform> {
-  PerFrameMeshTransformGenerator() { this->contract.global_priority = -2; }
-
-  virtual void tick(view_t &view) override final {
-    /// XXX: maybe dangerous estimate?
-    vao__index_count__mat4___size = view.size_hint();
-    vao__index_count__mat4 =
-        (intermediate_data_t *)transformed_meshes_arena.allocate_raw(
-            sizeof(intermediate_data_t) * vao__index_count__mat4___size);
-
-    int i = 0;
-    for (auto &e : view) {
-      auto &mesh_renderer = view.get<MeshRenderer>(e);
-      auto &transform = view.get<const base::Transform>(e);
-      auto &mesh = *mesh_renderer.mesh;
-
-      vao__index_count__mat4[i] = {mesh_renderer.vao, mesh.index_count,
-                                   transform.mat};
-
-      i++;
     }
   }
 };

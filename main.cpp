@@ -64,7 +64,7 @@ int main(void) {
   root_scene.emplace<Transform>(camera_entity, Transform());
 
   root_scene.get<Transform>(camera_entity).position = glm::vec3(0, 2, 0);
-  root_scene.get<Transform>(camera_entity).rotation = glm::vec3(0, 0, 3.14/2);
+  root_scene.get<Transform>(camera_entity).rotation = glm::vec3(0, 0, 3.14 / 2);
 
   auto &window = Window::instance();
 
@@ -73,7 +73,7 @@ int main(void) {
   scheduler.add_system(new WindowEndSystem());
   scheduler.add_system(new GeometryCollectionSystem());
   scheduler.add_system(new TransformRefresherSystem());
-  scheduler.add_system(new PerFrameMeshTransformGenerator());
+  scheduler.add_system(new RenderDataCollectionSystem());
   scheduler.add_system(new PerspectiveCameraSystem());
 
   Inputs::instance().register_keycode('X');
