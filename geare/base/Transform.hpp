@@ -13,7 +13,7 @@ struct Transform final {
   glm::vec3 scale;
 
   bool is_dirty = true;
-  glm::mat4 mat;
+  glm::mat4 mat = glm::zero<glm::mat4>();
 
   void refresh() {
     glm::mat4 scalar = glm::scale(glm::identity<glm::mat4>(), scale);
@@ -22,9 +22,10 @@ struct Transform final {
     mat = translate * rot * scalar;
   }
 
-  explicit Transform(glm::vec3 rotation = glm::vec3(0, 0, 0),
+  explicit Transform(glm::vec3 position = glm::vec3(0, 0, 0),
+                     glm::vec3 rotation = glm::vec3(0, 0, 0),
                      glm::vec3 scale = glm::vec3(1, 1, 1))
-      : rotation(rotation), scale(scale) {}
+      : rotation(rotation), scale(scale), position(position) {}
 };
 
 std::ostream &operator<<(std::ostream &out, const Transform &transform) {
