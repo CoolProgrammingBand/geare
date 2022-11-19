@@ -38,9 +38,7 @@ int main(void) {
     auto arena = Arena<>();
 
     struct NonTriviallyDestructible {
-      virtual ~NonTriviallyDestructible() {
-        was_really_destroyed++;
-      }
+      virtual ~NonTriviallyDestructible() { was_really_destroyed++; }
     };
 
     static_assert(!std::is_trivially_destructible_v<NonTriviallyDestructible>);
@@ -59,6 +57,7 @@ int main(void) {
   auto &root_scene = world.active_scene;
   auto some_entity = root_scene.create();
   auto another_entity = root_scene.create();
+  auto camera_entity = root_scene.create();
 
   root_scene.emplace<MeshRenderer>(some_entity, MeshRenderer());
   root_scene.emplace<Transform>(some_entity, Transform());
@@ -66,8 +65,12 @@ int main(void) {
   root_scene.emplace<MeshRenderer>(another_entity, MeshRenderer());
   root_scene.emplace<Transform>(another_entity, Transform());
 
+  root_scene.emplace<PerspectiveCamera>(camera_entity, PerspectiveCamera());
+  root_scene.emplace<Transform>(camera_entity, Transform());
+
   root_scene.get<Transform>(some_entity).position = glm::vec3(0, 1, -6);
   root_scene.get<Transform>(another_entity).position = glm::vec3(0, -1, -6);
+  root_scene.get<Transform>(camera_entity).position = glm::vec3(0, 0, 0);
 
   auto &window = Window::instance();
 
@@ -75,8 +78,9 @@ int main(void) {
   scheduler.add_system(new WindowBeginSystem());
   scheduler.add_system(new WindowEndSystem());
   scheduler.add_system(new GeometryCollectionSystem());
-  scheduler.add_system(new RendererSystem());
   scheduler.add_system(new TransformRefresherSystem());
+  scheduler.add_system(new PerFrameMeshTransformGenerator());
+  scheduler.add_system(new PerspectiveCameraSystem());
 
   Inputs::instance().register_keycode('X');
   scheduler.add_system(new FunctionSystem([]() {

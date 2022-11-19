@@ -39,6 +39,7 @@ struct Arena final {
       handle->~_NonTriviallyDestructibleHandle();
 
     destructor_handles.clear();
+    top = blob;
   }
 
   template <std::default_initializable T> T *allocate() {
