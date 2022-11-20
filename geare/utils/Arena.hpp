@@ -41,7 +41,7 @@ struct Arena final {
     destructor_handles.clear();
   }
 
-  template <std::default_initializable T> T *allocate() {
+  template <std::default_initializable T> [[nodiscard]] T *allocate() {
     auto raw = allocate_raw<T>();
     if (!raw)
       return nullptr;
@@ -56,7 +56,8 @@ struct Arena final {
     return raw;
   }
 
-  template <std::copy_constructible T> T *allocate(const T &value) {
+  template <std::copy_constructible T>
+  [[nodiscard]] T *allocate(const T &value) {
     auto *raw = allocate_raw<T>();
     if (!raw)
       return nullptr;
@@ -71,7 +72,7 @@ struct Arena final {
     return raw;
   }
 
-  template <std::move_constructible T> T *allocate(T &&value) {
+  template <std::move_constructible T> [[nodiscard]] T *allocate(T &&value) {
     auto *raw = allocate_raw<T>();
     if (!raw)
       return nullptr;
@@ -86,7 +87,7 @@ struct Arena final {
     return raw;
   }
 
-  std::byte *allocate_raw(std::size_t size) {
+  [[nodiscard]] std::byte *allocate_raw(std::size_t size) {
     if (!can_allocate(size))
       return nullptr;
 
@@ -98,6 +99,10 @@ struct Arena final {
 
   template <typename T> T *allocate_raw() {
     return (T *)allocate_raw(sizeof(T));
+  }
+
+  template <typename T> T *allocate_raw_array(std::size_t n) {
+    return (T *)allocate_raw(sizeof(T) * n);
   }
 
 protected:
