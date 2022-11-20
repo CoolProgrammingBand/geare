@@ -15,7 +15,9 @@ struct PerspectiveCamera {
 
 struct PerspectiveCameraSystem
     : core::StaticSystem<const PerspectiveCamera, const base::Transform> {
-  PerspectiveCameraSystem() { this->contract.global_priority = -5; }
+  PerspectiveCameraSystem(RenderDataStorage* storage) : storage(storage) { this->contract.global_priority = -5; }
+
+  RenderDataStorage* storage;
 
   virtual void tick(view_t &camera_entities) override {
     int width, height;
@@ -37,8 +39,8 @@ struct PerspectiveCameraSystem
       auto projection = glm::perspective(camera.fov, (float)width / height,
                                          camera.near_plane, camera.far_plane);
 
-      for (int i = 0; i < raw_render_data_size; i++) {
-        auto &render_data = raw_render_data[i];
+      for (int i = 0; i < storage->sample_count; i++) {
+        auto &render_data = storage->samples_begin[i];
         auto transform = render_data.model_mat;
 
         glLoadMatrixf(&(projection * view * transform)[0][0]);
@@ -48,7 +50,7 @@ struct PerspectiveCameraSystem
       }
     }
 
-    raw_render_data_arena.clear();
+    storage->arena.clear();
     glFlush();
   }
 };

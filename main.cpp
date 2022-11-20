@@ -73,8 +73,11 @@ int main(void) {
   scheduler.add_system(new WindowEndSystem());
   scheduler.add_system(new GeometryCollectionSystem());
   scheduler.add_system(new TransformRefresherSystem());
-  scheduler.add_system(new RenderDataCollectionSystem());
-  scheduler.add_system(new PerspectiveCameraSystem());
+
+  RenderDataStorage render_data_storage;
+
+  scheduler.add_system(new RenderDataCollectionSystem(&render_data_storage));
+  scheduler.add_system(new PerspectiveCameraSystem(&render_data_storage));
 
   Inputs::instance().register_keycode('X');
   scheduler.add_system(new FunctionSystem([]() {

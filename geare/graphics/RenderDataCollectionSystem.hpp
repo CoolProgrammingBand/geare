@@ -20,19 +20,30 @@ struct RenderData {
       : vao(vao), index_count(index_count), model_mat(model_mat) {}
 };
 
-static utils::Arena<> raw_render_data_arena;
-static RenderData *raw_render_data;
-static std::size_t raw_render_data_size;
+// This might be a temporary solution or we might be keeping it idk
+// Service locator might help solve this?
+// This is a more general problem of system-to-system communication and the
+// solution is unclear, perhaps could be achieved by async systems waiting for
+// other systems to finish and then sending data
+struct RenderDataStorage {
+  utils::Arena<> arena;
+  RenderData *samples_begin;
+  std::size_t sample_count;
+};
 
 struct RenderDataCollectionSystem
     : core::StaticSystem<MeshRenderer, const base::Transform> {
-  RenderDataCollectionSystem() { this->contract.global_priority = -2; }
+  RenderDataCollectionSystem(RenderDataStorage *storage) : storage(storage) {
+    this->contract.global_priority = -2;
+  }
+
+  RenderDataStorage *storage;
 
   virtual void tick(view_t &view) override final {
     /// XXX: maybe dangerous estimate?
-    raw_render_data_size = view.size_hint();
-    raw_render_data = (RenderData *)raw_render_data_arena.allocate_raw(
-        sizeof(RenderData) * raw_render_data_size);
+    storage->sample_count = view.size_hint();
+    storage->samples_begin = (RenderData *)storage->arena.allocate_raw(
+        sizeof(RenderData) * storage->sample_count);
 
     int i = 0;
     for (auto &e : view) {
@@ -40,7 +51,7 @@ struct RenderDataCollectionSystem
       auto &transform = view.get<const base::Transform>(e);
       auto &mesh = *mesh_renderer.mesh;
 
-      raw_render_data[i++] =
+      storage->samples_begin[i++] =
           RenderData(mesh_renderer.vao, mesh.index_count, transform.mat);
     }
   }
