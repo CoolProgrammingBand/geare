@@ -1,6 +1,7 @@
 #ifndef _INCLUDE__GEARE__BASE__CLOCK_
 #define _INCLUDE__GEARE__BASE__CLOCK_
 
+#include "../core/Logger.hpp"
 #include "../core/System.hpp"
 #include "../utils/Singleton.hpp"
 #include "glfw.hpp"
@@ -34,7 +35,8 @@ struct ClockSystem : core::System {
       clock.fps = clock.frame_count;
       clock.frame_count = 0;
       clock.frame_timer = clock.global_time;
-      std::cout << clock.fps << std::endl;
+      core::Logger::instance().log("Clock", core::LogSeverity::Debug,
+                                   "FPS: ", clock.fps);
     }
   }
 
