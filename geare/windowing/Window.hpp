@@ -115,9 +115,10 @@ protected:
                                                   GLsizei length,
                                                   const GLchar *message,
                                                   const void *userParam) {
-    core::Logger::instance().log(
-        "OpenGL", core::LogSeverity::Info,
+    log_begin_ctx("OpenGL");
+    log_info(
         "If you can see this, debug opengl message callback is up and running");
+    log_end_ctx();
   }
 };
 

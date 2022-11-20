@@ -25,6 +25,8 @@ struct ClockSystem : core::System {
   }
 
   virtual void tick() override {
+    log_begin_ctx("Clock");
+
     auto &clock = Clock::instance();
     double current_tick_time = glfwGetTime();
     clock.global_time = current_tick_time;
@@ -35,9 +37,10 @@ struct ClockSystem : core::System {
       clock.fps = clock.frame_count;
       clock.frame_count = 0;
       clock.frame_timer = clock.global_time;
-      core::Logger::instance().log("Clock", core::LogSeverity::Debug,
-                                   "FPS: ", clock.fps);
+      log_dbg("FPS: ", clock.fps);
     }
+
+    log_end_ctx();
   }
 
   double last_tick_time = 0;
