@@ -21,6 +21,7 @@ struct Logger : utils::Singleton<Logger> {
 
   Logger() {
     outputs.push_back({LogSeverity::Debug, LogSeverity::Critical, &std::cout});
+    outputs.push_back({LogSeverity::Error, LogSeverity::Critical, &std::cerr});
   }
 
   static const char *log_severity_to_cstr(LogSeverity severity) {
