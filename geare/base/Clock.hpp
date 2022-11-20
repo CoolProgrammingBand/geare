@@ -1,6 +1,7 @@
 #ifndef _INCLUDE__GEARE__BASE__CLOCK_
 #define _INCLUDE__GEARE__BASE__CLOCK_
 
+#include "../core/Logger.hpp"
 #include "../core/System.hpp"
 #include "../utils/Singleton.hpp"
 #include "glfw.hpp"
@@ -24,6 +25,8 @@ struct ClockSystem : core::System {
   }
 
   virtual void tick() override {
+    log_begin_ctx("Clock");
+
     auto &clock = Clock::instance();
     double current_tick_time = glfwGetTime();
     clock.global_time = current_tick_time;
@@ -34,8 +37,10 @@ struct ClockSystem : core::System {
       clock.fps = clock.frame_count;
       clock.frame_count = 0;
       clock.frame_timer = clock.global_time;
-      std::cout << clock.fps << std::endl;
+      log_dbg("FPS: ", clock.fps);
     }
+
+    log_end_ctx();
   }
 
   double last_tick_time = 0;
