@@ -45,7 +45,7 @@ struct Arena final {
     auto raw = allocate_raw<T>();
     if (!raw)
       return nullptr;
-    new (raw) T();
+    new (std::launder(raw)) T();
 
     if constexpr (!std::is_trivially_destructible_v<T>) {
       auto *handle = allocate_raw<_NonTriviallyDestructibleInner<T>>();
@@ -60,7 +60,7 @@ struct Arena final {
     auto *raw = allocate_raw<T>();
     if (!raw)
       return nullptr;
-    new (raw) T(value);
+    new (std::launder(raw)) T(value);
 
     if constexpr (!std::is_trivially_destructible_v<T>) {
       auto *handle = allocate_raw(sizeof(_NonTriviallyDestructibleInner<T>));
@@ -75,7 +75,7 @@ struct Arena final {
     auto *raw = allocate_raw<T>();
     if (!raw)
       return nullptr;
-    new (raw) T();
+    new (std::launder(raw)) T();
 
     if constexpr (!std::is_trivially_destructible_v<T>) {
       auto *handle = allocate_raw(sizeof(_NonTriviallyDestructibleInner<T>));
