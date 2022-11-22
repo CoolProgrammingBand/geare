@@ -1,12 +1,8 @@
-#ifndef _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
-#define _INCLUDE__GEARE__GRAPHICS__RENDERING_SYSTEMS_
+#ifndef _INCLUDE__GEARE__GRAPHICS__GEOMETRY_COLLECTION_SYSTEM_
+#define _INCLUDE__GEARE__GRAPHICS__GEOMETRY_COLLECTION_SYSTEM_
 
-#include "../base/Transform.hpp"
 #include "../core/System.hpp"
-#include "../windowing/Window.hpp"
 #include "./MeshRenderer.hpp"
-#include <glfw.hpp>
-#include <glm.hpp>
 
 namespace geare::graphics {
 
@@ -41,37 +37,6 @@ struct GeometryCollectionSystem : core::StaticSystem<MeshRenderer> {
         mesh_renderer.is_dirty = false;
       }
     }
-  }
-};
-
-struct RendererSystem
-    : core::StaticSystem<MeshRenderer, const base::Transform> {
-  virtual void tick(view_t &view) override final {
-    int width, height;
-    glfwGetFramebufferSize(windowing::Window::instance().window, &width,
-                           &height);
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    for (auto &e : view) {
-      auto &mesh_renderer = view.get<MeshRenderer>(e);
-      auto &transform = view.get<const base::Transform>(e);
-
-      auto &mesh = *mesh_renderer.mesh;
-
-      auto view = glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -6),
-                              glm::vec3(0.0f, 1.0f, 0.0f));
-
-      auto projection =
-          glm::perspective(90.f, (float)width / height, 0.1f, 100.f);
-      glLoadMatrixf(&(view * projection * transform.mat)[0][0]);
-
-      glBindVertexArray(mesh_renderer.vao);
-      glDrawElements(GL_TRIANGLES, mesh.index_count, GL_UNSIGNED_INT, 0);
-      glBindVertexArray(0);
-    }
-
-    glFlush();
   }
 };
 
