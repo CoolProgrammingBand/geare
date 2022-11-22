@@ -32,6 +32,71 @@ struct PerspectiveCameraSystem
     glfwGetFramebufferSize(windowing::Window::instance().window, &width,
                            &height);
 
+    static bool first_run = true;
+    static unsigned int shaderProgram;
+    static unsigned int transformShaderLoc;
+
+    if (first_run) {
+      const char *vertexShaderSource =
+          "#version 330 core\n"
+          "layout (location = 0) in vec3 aPos;\n"
+          "uniform mat4 transform;\n"
+          "void main()\n"
+          "{\n"
+          "   gl_Position = transform * vec4(aPos, 1.0);\n"
+          "}\0";
+
+      const char *fragmentShaderSource =
+          "#version 330 core\n"
+          "out vec4 FragColor;\n"
+          "void main()\n"
+          "{\n"
+          "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+          "}\0";
+
+      unsigned int vertexShader;
+      vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+      glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+      glCompileShader(vertexShader);
+
+      int success;
+      char infoLog[512];
+      glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+      if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
+        std::terminate();
+      }
+
+      unsigned int fragmentShader;
+      fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+      glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+      glCompileShader(fragmentShader);
+
+      glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+      if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
+        std::terminate();
+      }
+
+      shaderProgram = glCreateProgram();
+
+      glAttachShader(shaderProgram, vertexShader);
+      glAttachShader(shaderProgram, fragmentShader);
+      glLinkProgram(shaderProgram);
+
+      glDeleteShader(vertexShader);
+      glDeleteShader(fragmentShader);
+
+      transformShaderLoc = glGetUniformLocation(shaderProgram, "transform");
+
+      first_run = false;
+    }
+
     for (auto entity : camera_entities) {
       auto &camera = camera_entities.get<PerspectiveCamera>(entity);
       auto &transform = camera_entities.get<const base::Transform>(entity);
@@ -78,11 +143,13 @@ struct PerspectiveCameraSystem
       auto projection = glm::perspective(camera.fov, (float)width / height,
                                          camera.near_plane, camera.far_plane);
 
+      glUseProgram(shaderProgram);
       for (int i = 0; i < storage->sample_count; i++) {
         auto &render_data = storage->samples_begin[i];
         auto transform = render_data.model_mat;
+        glUniformMatrix4fv(transformShaderLoc, 1, GL_FALSE,
+                           glm::value_ptr(projection * view * transform));
 
-        glLoadMatrixf(&(projection * view * transform)[0][0]);
         glBindVertexArray(render_data.vao);
         glDrawElements(GL_TRIANGLES, render_data.index_count, GL_UNSIGNED_INT,
                        0);
