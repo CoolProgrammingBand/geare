@@ -62,6 +62,7 @@ int main(void) {
 
   root_scene.emplace<PerspectiveCamera>(camera_entity, PerspectiveCamera());
   root_scene.emplace<Transform>(camera_entity, Transform());
+  root_scene.get<PerspectiveCamera>(camera_entity).is_dirty = false;
 
   root_scene.get<Transform>(camera_entity).position = glm::vec3(0, 2, 0);
   root_scene.get<Transform>(camera_entity).rotation = glm::vec3(0, 0, 3.14 / 2);
