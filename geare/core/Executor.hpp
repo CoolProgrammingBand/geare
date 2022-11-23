@@ -3,6 +3,9 @@
 
 #include <coroutine>
 #include <deque>
+#include <map>
+
+#include <entt.hpp>
 
 namespace geare::core {
 
@@ -21,7 +24,23 @@ struct task_promise_t {
   void unhandled_exception() {}
 };
 
+enum struct ComponentAccessType : char {
+  Const,
+  Mut,
+};
+
+struct UniqueComponentIdentifier {
+  entt::id_type id;
+};
+
+using ComponentAccess =
+    std::pair<UniqueComponentIdentifier, ComponentAccessType>;
+
 struct Executor {
+  entt::registry *component_registry;
+  Executor(entt::registry *component_registry)
+      : component_registry(component_registry) {}
+
   void enqueue_immediate_task(Task &&task) { tasks.push_back(task); }
   void enqueue_delayed_task(Task &&task) { future_tasks.push_back(task); }
 
@@ -40,6 +59,22 @@ struct Executor {
         tasks.push_back(task);
       }
     }
+  }
+
+  template <typename... Ts> struct AwaitForComponents {
+    Executor *executor;
+
+    AwaitForComponents(Executor *executor) : executor(executor) {}
+
+    bool await_ready() { return false; }
+
+    auto await_resume() { return executor->component_registry->view<Ts...>(); }
+
+    void await_suspend(std::coroutine_handle<task_promise_t> handle) {}
+  };
+
+  template <typename... Ts> auto get_components() -> AwaitForComponents<Ts...> {
+    return AwaitForComponents<Ts...>(this);
   }
 
   std::deque<Task> tasks;

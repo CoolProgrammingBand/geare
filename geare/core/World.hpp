@@ -1,16 +1,16 @@
 #ifndef _INCLUDE__GEARE__CORE__WORLD_
 #define _INCLUDE__GEARE__CORE__WORLD_
 
+#include "./Executor.hpp"
 #include "Scene.hpp"
-#include "Scheduler.hpp"
 
 namespace geare::core {
 
 struct World {
-  explicit World() {}
+  explicit World() : executor(&active_scene) {}
 
   Scene active_scene;
-  Scheduler scheduler;
+  Executor executor;
 };
 
 } // namespace geare::core
