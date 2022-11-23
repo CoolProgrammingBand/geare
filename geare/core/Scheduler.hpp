@@ -1,48 +1,49 @@
 #ifndef _INCLUDE__GEARE__CORE__SCHEDULER_
 #define _INCLUDE__GEARE__CORE__SCHEDULER_
 
-#include "../utils/Arena.hpp"
-#include "./System.hpp"
-#include <algorithm>
-#include <vector>
+#include <coroutine>
+#include <deque>
 
 namespace geare::core {
 
-struct Scheduler {
-  void add_system(System *system) {
-    systems.push_back(system);
-    std::push_heap(
-        systems.begin(), systems.end(), [](const System *a, const System *b) {
-          return a->contract.global_priority < b->contract.global_priority;
-        });
-    max_view_size = std::max(system->view_size, max_view_size);
+struct task_promise_t;
+
+struct Task : std::coroutine_handle<task_promise_t> {
+  using promise_type = task_promise_t;
+};
+
+struct task_promise_t {
+  Task get_return_object() { return {Task::from_promise(*this)}; }
+  std::suspend_always initial_suspend() noexcept { return {}; }
+  std::suspend_always final_suspend() noexcept { return {}; }
+
+  void return_void() {}
+  void unhandled_exception() {}
+};
+
+struct Executor {
+  void enqueue_immediate_task(Task &&task) { tasks.push_back(task); }
+  void enqueue_delayed_task(Task &&task) { future_tasks.push_back(task); }
+
+  void tick() {
+    while (!tasks.empty())
+      this->step();
+    std::swap(future_tasks, tasks);
   }
 
-  virtual void tick(entt::registry &registry) {
-    for (auto &system : systems) {
-      auto view = tick_arena.allocate_raw(system->view_size);
-      auto &contract = system->contract;
-
-      if (contract.captured_component_count > 0) {
-        system->create_component_view(registry, view);
-        system->tick(view);
-      } else {
-        system->tick();
+  void step() {
+    Task task = std::move(tasks.front());
+    tasks.pop_front();
+    if (!task.done()) {
+      task.resume();
+      if (!task.done()) {
+        tasks.push_back(task);
       }
     }
-
-    tick_arena.clear();
   }
 
-  ~Scheduler() {
-    for (auto system : systems)
-      delete system;
-  }
-
-protected:
-  utils::Arena<> tick_arena;
-  std::size_t max_view_size = 0;
-  std::vector<System *> systems;
+  std::deque<Task> tasks;
+  std::deque<Task> future_tasks;
 };
 
 } // namespace geare::core
