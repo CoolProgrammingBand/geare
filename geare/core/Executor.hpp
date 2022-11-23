@@ -1,10 +1,11 @@
-#ifndef _INCLUDE__GEARE__CORE__SCHEDULER_
-#define _INCLUDE__GEARE__CORE__SCHEDULER_
+#ifndef _INCLUDE__GEARE__CORE__EXECUTOR_
+#define _INCLUDE__GEARE__CORE__EXECUTOR_
 
 #include <coroutine>
 #include <deque>
 #include <map>
 
+#include "./AdvancedRegistry.hpp"
 #include "./Logger.hpp"
 
 #include <entt.hpp>
@@ -26,26 +27,10 @@ struct task_promise_t {
   void unhandled_exception() {}
 };
 
-enum struct ComponentAccessType : char {
-  Const,
-  Mut,
-};
-
-using UniqueComponentIdentifier = entt::id_type;
-
-using ComponentAccess =
-    std::pair<UniqueComponentIdentifier, ComponentAccessType>;
-
-template <typename... Ts>
-using get_view_t =
-    entt::basic_view<entt::entity, entt::get_t<Ts...>, entt::exclude_t<>, void>;
-
-struct Executor;
-
 struct Executor {
-  entt::registry *component_registry;
-  Executor(entt::registry *component_registry)
-      : component_registry(component_registry) {}
+  AdvancedRegistry *registry;
+
+  Executor(AdvancedRegistry *registry) : registry(registry) {}
 
   void enqueue_immediate_task(Task &&task) { tasks.push_back(task); }
   void enqueue_delayed_task(Task &&task) { future_tasks.push_back(task); }
@@ -69,25 +54,19 @@ struct Executor {
 
   template <typename... Ts> struct AwaitForComponents {
     Executor *executor;
-    // This can be easily optimized away into a static
-    std::vector<ComponentAccess> accesses;
 
-    AwaitForComponents(Executor *executor)
-        : executor(executor),
-          accesses({{entt::type_id<Ts>().hash(),
-                     std::is_const_v<Ts> ? ComponentAccessType::Const
-                                         : ComponentAccessType::Mut}...}) {}
+    AwaitForComponents(Executor *executor) : executor(executor) {}
 
     bool await_ready() {
       log_dbg("| Attempt to get components: ", entt::type_id<Ts>().name()...);
 
       bool ready = true;
-      for (auto &access : accesses)
-        ready &= executor->is_component_available(access);
+      for (auto &access : multicomponent_access<Ts...>)
+        ready &= executor->registry->is_component_available(access);
 
       if (ready) {
-        for (auto &access : accesses)
-          executor->use_component(access);
+        for (auto &access : multicomponent_access<Ts...>)
+          executor->registry->is_component_available(access);
 
         log_dbg("|- Got components!");
       } else
@@ -96,7 +75,7 @@ struct Executor {
       return ready;
     }
 
-    auto await_resume() { return executor->component_registry->view<Ts...>(); }
+    auto await_resume() { return executor->registry->view<Ts...>(); }
 
     void await_suspend(std::coroutine_handle<task_promise_t> handle) {}
   };
@@ -104,31 +83,6 @@ struct Executor {
   template <typename... Ts> auto get_components() -> AwaitForComponents<Ts...> {
     return AwaitForComponents<Ts...>(this);
   }
-
-  bool is_component_available(ComponentAccess access) {
-    auto [id, access_as] = access;
-    return !mut_map[id] &&
-           ((access_as == ComponentAccessType::Mut) <= !const_map[id]);
-  }
-
-  void use_component(ComponentAccess access) {
-    auto [id, access_as] = access;
-    if (access_as == ComponentAccessType::Mut)
-      mut_map[id] = true;
-    else
-      const_map[id]++;
-  }
-
-  void release_component(ComponentAccess access) {
-    auto [id, access_as] = access;
-    if (access_as == ComponentAccessType::Mut)
-      mut_map[id] = false;
-    else
-      const_map[id]--;
-  }
-
-  std::map<UniqueComponentIdentifier, bool> mut_map;
-  std::map<UniqueComponentIdentifier, unsigned> const_map;
 
   std::deque<Task> tasks;
   std::deque<Task> future_tasks;
