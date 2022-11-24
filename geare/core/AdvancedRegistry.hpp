@@ -22,14 +22,17 @@ static constexpr std::array<ComponentAccess, sizeof...(Ts)>
                                            ? ComponentAccessType::Const
                                            : ComponentAccessType::Mut)...};
 
+template <typename... Ts>
+using getter_view = entt::view<entt::get_t<Ts...>, entt::exclude_t<>>;
+
 struct AdvancedRegistry : entt::registry {
-  bool is_component_available(ComponentAccess access) {
+  bool can_access_component(ComponentAccess access) {
     auto [id, access_as] = access;
     return !mut_map[id] &&
            ((access_as == ComponentAccessType::Mut) <= !const_map[id]);
   }
 
-  void use_component(ComponentAccess access) {
+  void mark_component_as_accessed(ComponentAccess access) {
     auto [id, access_as] = access;
     if (access_as == ComponentAccessType::Mut)
       mut_map[id] = true;
@@ -37,7 +40,7 @@ struct AdvancedRegistry : entt::registry {
     const_map[id]++;
   }
 
-  void release_component(ComponentAccess access) {
+  void unmark_accessed_component(ComponentAccess access) {
     auto [id, access_as] = access;
     if (access_as == ComponentAccessType::Mut)
       mut_map[id] = false;
@@ -49,8 +52,30 @@ struct AdvancedRegistry : entt::registry {
     return const_map[id] + (unsigned)mut_map[id];
   }
 
+protected:
+  template <typename... Ts> struct SimpleView : getter_view<Ts...> {
+    std::reference_wrapper<AdvancedRegistry> registry;
+
+    SimpleView(AdvancedRegistry &registry)
+        : getter_view<Ts...>(registry.view<Ts...>()), registry(registry) {
+      for (auto &access : multicomponent_access<Ts...>)
+        registry.mark_component_as_accessed(access);
+    }
+
+    ~SimpleView() {
+      AdvancedRegistry &registry = this->registry;
+      for (auto &access : multicomponent_access<Ts...>)
+        registry.unmark_accessed_component(access);
+    }
+  };
+
   std::map<UniqueComponentIdentifier, bool> mut_map;
   std::map<UniqueComponentIdentifier, unsigned> const_map;
+
+public:
+  template <typename... Ts> auto get_components() -> SimpleView<Ts...> {
+    return SimpleView<Ts...>(*this);
+  }
 };
 
 } // namespace geare::core

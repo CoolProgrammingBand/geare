@@ -26,8 +26,9 @@ int main(void) {
         log_dbg((char)id, " did work and now has ", --i, " work left");
 
         if (i > 0) {
-          // TODO: automatic component release
-          auto view = co_await executor.get_components<A, B>();
+          {
+            auto view = co_await executor.get_components<A, B>();
+          }
           co_await std::suspend_always();
         } else
           break;

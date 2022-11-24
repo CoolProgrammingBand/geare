@@ -62,12 +62,9 @@ struct Executor {
 
       bool ready = true;
       for (auto &access : multicomponent_access<Ts...>)
-        ready &= executor->registry->is_component_available(access);
+        ready &= executor->registry->can_access_component(access);
 
       if (ready) {
-        for (auto &access : multicomponent_access<Ts...>)
-          executor->registry->is_component_available(access);
-
         log_dbg("|- Got components!");
       } else
         log_dbg("|- Failed to get components!");
@@ -75,7 +72,7 @@ struct Executor {
       return ready;
     }
 
-    auto await_resume() { return executor->registry->view<Ts...>(); }
+    auto await_resume() { return executor->registry->get_components<Ts...>(); }
 
     void await_suspend(std::coroutine_handle<task_promise_t> handle) {}
   };
