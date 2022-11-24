@@ -23,13 +23,16 @@ struct Task : std::coroutine_handle<task_promise_t> {
 struct task_promise_t {
   std::optional<std::string> task_name;
 
-  void set_name(std::string_view name) {
-    this->task_name = name;
-  }
+  void set_name(std::string_view name) { this->task_name = name; }
 
   Task get_return_object() { return {Task::from_promise(*this)}; }
   std::suspend_always initial_suspend() noexcept { return {}; }
   std::suspend_always final_suspend() noexcept { return {}; }
+
+  template <typename T> T await_transform(T s) {
+    log_dbg("I am suspended!");
+    return s;
+  }
 
   void return_void() {}
   void unhandled_exception() {}
@@ -53,7 +56,7 @@ struct Executor {
     Task task = std::move(tasks.front());
     tasks.pop_front();
     if (!task.done()) {
-      auto& maybe_task_name = task.promise().task_name;
+      auto &maybe_task_name = task.promise().task_name;
       log_begin_ctx(maybe_task_name.value_or("none"));
 
       task.resume();

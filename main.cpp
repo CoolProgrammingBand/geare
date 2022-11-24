@@ -28,7 +28,6 @@ int main(void) {
           ok &= executor.registry->can_access_component(a);
         log_dbg("Attempt to get components was made, status: ", ok);
         if (!ok) {
-          log_dbg("Suspending...");
           co_await std::suspend_always();
         } else
           break;
