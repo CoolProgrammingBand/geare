@@ -22,13 +22,25 @@ int main(void) {
   auto task_factory = [&]() -> Task {
     static char id = 'a';
     return [](int i, int id, Executor &executor) -> Task {
+
+      // Wait for components
+      for (bool ok = true;; ok = true) {
+        for (auto &a : multicomponent_access<A, B>)
+          ok &= executor.registry->can_access_component(a);
+        log_dbg("Attempt to get components was made, status: ", ok);
+        if (!ok)
+          co_await std::suspend_always();
+        else
+          break;
+      }
+
+      auto view = co_await executor.get_components<A, B>();
+
       for (;;) {
         log_dbg((char)id, " did work and now has ", --i, " work left");
 
         if (i > 0) {
-          {
-            auto view = co_await executor.get_components<A, B>();
-          }
+          {}
           co_await std::suspend_always();
         } else
           break;

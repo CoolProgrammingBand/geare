@@ -58,16 +58,16 @@ struct Executor {
     AwaitForComponents(Executor *executor) : executor(executor) {}
 
     bool await_ready() {
-      log_dbg("| Attempt to get components: ", entt::type_id<Ts>().name()...);
+      log_dbg("Attempt to get components: ", entt::type_id<Ts>().name()...);
 
       bool ready = true;
       for (auto &access : multicomponent_access<Ts...>)
         ready &= executor->registry->can_access_component(access);
 
       if (ready) {
-        log_dbg("|- Got components!");
+        log_dbg("Got components!");
       } else
-        log_dbg("|- Failed to get components!");
+        log_dbg("Failed to get components!");
 
       return ready;
     }
