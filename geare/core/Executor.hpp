@@ -29,11 +29,6 @@ struct task_promise_t {
   std::suspend_always initial_suspend() noexcept { return {}; }
   std::suspend_always final_suspend() noexcept { return {}; }
 
-  template <typename T> T await_transform(T s) {
-    log_dbg("I am suspended!");
-    return s;
-  }
-
   void return_void() {}
   void unhandled_exception() {}
 };
@@ -58,12 +53,7 @@ struct Executor {
     if (!task.done()) {
       auto &maybe_task_name = task.promise().task_name;
       log_begin_ctx(maybe_task_name.value_or("none"));
-
       task.resume();
-      if (!task.done()) {
-        tasks.push_back(task);
-      }
-
       log_end_ctx();
     }
   }
@@ -73,29 +63,27 @@ struct Executor {
 
     AwaitForComponents(Executor *executor) : executor(executor) {}
 
-    bool await_ready() {
-      log_dbg("Attempt to get components: ", entt::type_id<Ts>().name()...);
-
-      bool ready = true;
-      for (auto &access : multicomponent_access<Ts...>)
-        ready &= executor->registry->can_access_component(access);
-
-      if (ready) {
-        log_dbg("Got components!");
-      } else
-        log_dbg("Failed to get components!");
-
-      return ready;
-    }
+    bool await_ready() { return false; }
 
     auto await_resume() { return executor->registry->get_components<Ts...>(); }
 
-    void await_suspend(std::coroutine_handle<task_promise_t> handle) {}
+    void await_suspend(std::coroutine_handle<task_promise_t> handle) {
+      log_dbg("Enqueued into the component waiting list");
+
+      // TODO: just a stub to test if this approach even works
+      executor->waiting_on_components.push_back(std::make_pair(
+          handle.promise().get_return_object(),
+          std::vector<ComponentAccess>(multicomponent_access<Ts...>.begin(),
+                                       multicomponent_access<Ts...>.end())));
+    }
   };
 
   template <typename... Ts> auto get_components() -> AwaitForComponents<Ts...> {
     return AwaitForComponents<Ts...>(this);
   }
+
+  std::deque<std::pair<Task, std::vector<ComponentAccess>>>
+      waiting_on_components;
 
   std::deque<Task> tasks;
   std::deque<Task> future_tasks;

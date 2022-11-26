@@ -22,18 +22,7 @@ int main(void) {
   auto task_factory = [&](std::string_view task_name) -> Task {
     static char id = 'a';
     auto coro = [](int i, Executor &executor) -> Task {
-      // Wait for components
-      for (bool ok = true;; ok = true) {
-        for (auto &a : multicomponent_access<A, B>)
-          ok &= executor.registry->can_access_component(a);
-        log_dbg("Attempt to get components was made, status: ", ok);
-        if (!ok) {
-          co_await std::suspend_always();
-        } else
-          break;
-      }
-
-      auto view = co_await executor.get_components<A, B>();
+      auto view = co_await executor.get_components<A, const B>();
 
       for (;;) {
         log_dbg("Did work and now has ", --i, " work left");

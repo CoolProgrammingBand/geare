@@ -15,12 +15,15 @@ using UniqueComponentIdentifier = entt::id_type;
 using ComponentAccess =
     std::pair<UniqueComponentIdentifier, ComponentAccessType>;
 
+template <typename T>
+constexpr auto make_component_access() -> ComponentAccess {
+  return std::pair(entt::type_hash<T>::value(), std::is_const_v<T>
+                                                    ? ComponentAccessType::Const
+                                                    : ComponentAccessType::Mut);
+}
 template <typename... Ts>
 static constexpr std::array<ComponentAccess, sizeof...(Ts)>
-    multicomponent_access = {std::pair(entt::type_hash<Ts>::value(),
-                                       std::is_const_v<Ts>
-                                           ? ComponentAccessType::Const
-                                           : ComponentAccessType::Mut)...};
+    multicomponent_access = {make_component_access<Ts>()...};
 
 template <typename... Ts>
 using getter_view = entt::view<entt::get_t<Ts...>, entt::exclude_t<>>;
