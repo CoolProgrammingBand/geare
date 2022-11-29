@@ -27,6 +27,7 @@ int main(void) {
         co_await executor.defer();
       };
       log_dbg("Done!");
+      view.release();
       co_return;
     }(4, world.executor);
 

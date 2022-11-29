@@ -5,6 +5,7 @@
 #include <deque>
 #include <map>
 #include <optional>
+#include <span>
 #include <string>
 
 #include "./AdvancedRegistry.hpp"
@@ -35,15 +36,53 @@ struct Executor {
     std::suspend_always final_suspend() noexcept { return {}; }
 
     void return_void() {}
-    void unhandled_exception() {}
+
+    void unhandled_exception() {
+      std::exception_ptr ex = std::current_exception();
+
+      try {
+        std::rethrow_exception(ex);
+      } catch (const std::exception &e) {
+        log_err("Unhandled exception: ", e.what());
+      }
+
+      this->get_return_object().destroy();
+    }
   };
 
   void schedule(Task &&task) { tasks.push_back(task); }
   void schedule_next(Task &&task) { future_tasks.push_back(task); }
 
   void tick() {
-    while (!tasks.empty())
-      this->step();
+    while (waiting_on_components.size() + tasks.size() > 0) {
+      while (!tasks.empty())
+        this->step();
+
+      decltype(waiting_on_components) currently_waiting;
+      std::swap(currently_waiting, waiting_on_components);
+      while (!currently_waiting.empty()) {
+        auto [task_tmp, awaiting_components] =
+            std::move(currently_waiting.front());
+          currently_waiting.pop_front();
+        auto task = task_tmp;
+        log_begin_ctx(task.promise().task_name.value_or("none"));
+
+        auto borrows = awaiting_components->get_borrows();
+
+        if (this->registry->can_borrow(borrows)) {
+          log_dbg("Got components!");
+          // Construct view, occupying the component
+          awaiting_components->_resolve();
+          tasks.push_front(task);
+        } else {
+          log_dbg("Can't get components, deferring");
+          waiting_on_components.push_back(
+              std::make_pair(task, awaiting_components));
+        }
+
+        log_end_ctx();
+      }
+    }
     std::swap(future_tasks, tasks);
   }
 
@@ -72,28 +111,55 @@ struct Executor {
 
   auto defer() -> AwaitDefer { return AwaitDefer{this}; }
 
-  template <typename... Ts> struct AwaitForComponents : AwaitExecutor {
+  struct AbstractAwaitComponents : AwaitExecutor {
     using AwaitExecutor::AwaitExecutor;
+    virtual std::span<const ComponentBorrowDescriptor> get_borrows() const = 0;
+    virtual void _resolve() = 0;
+  };
 
-    auto await_resume() { return executor->registry->get_components<Ts...>(); }
+  template <typename... Ts> struct AwaitComponents : AbstractAwaitComponents {
+    using AbstractAwaitComponents::AbstractAwaitComponents;
+
+    std::optional<AdvancedRegistry::SimpleView<Ts...>> resolved_view =
+        std::nullopt;
+
+    virtual std::span<const ComponentBorrowDescriptor>
+    get_borrows() const override {
+      return std::span(multicomponent_access<Ts...>);
+    }
+
+    bool await_ready() {
+      bool is_ready = executor->registry->can_borrow(this->get_borrows());
+      if (is_ready)
+        _resolve();
+      return is_ready;
+    }
+
+    auto await_resume() {
+      // TODO: throw if resumed with no value
+      // RIIIGHT, so apparently there is no best way of moving out of an
+      // optional, so i had to reinvent this
+      return std::move(resolved_view.value());
+    }
 
     void await_suspend(std::coroutine_handle<TaskPromise> handle) {
       log_dbg("Enqueued into the component waiting list");
 
       // TODO: just a stub to test if this approach even works
-      executor->waiting_on_components.push_back(std::make_pair(
-          handle.promise().get_return_object(),
-          std::vector<ComponentAccess>(multicomponent_access<Ts...>.begin(),
-                                       multicomponent_access<Ts...>.end())));
+      executor->waiting_on_components.push_back(
+          std::make_pair(handle.promise().get_return_object(), this));
+    }
+
+    void _resolve() override final {
+      resolved_view = executor->registry->get_components<Ts...>();
     }
   };
 
-  template <typename... Ts> auto get_components() -> AwaitForComponents<Ts...> {
-    return AwaitForComponents<Ts...>(this);
+  template <typename... Ts> auto get_components() -> AwaitComponents<Ts...> {
+    return AwaitComponents<Ts...>(this);
   }
 
-  std::deque<std::pair<Task, std::vector<ComponentAccess>>>
-      waiting_on_components;
+  std::deque<std::pair<Task, AbstractAwaitComponents *>> waiting_on_components;
 
   std::deque<Task> tasks;
   std::deque<Task> future_tasks;
