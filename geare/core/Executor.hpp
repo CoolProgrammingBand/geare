@@ -40,13 +40,13 @@ struct Executor {
     void unhandled_exception() {
       std::exception_ptr ex = std::current_exception();
 
+      this->get_return_object().destroy();
       try {
         std::rethrow_exception(ex);
       } catch (const std::exception &e) {
-        log_err("Unhandled exception: ", e.what());
+        log_err("Unhandled exception in a task, propagating ", e.what());
+        std::rethrow_exception(ex);
       }
-
-      this->get_return_object().destroy();
     }
   };
 
