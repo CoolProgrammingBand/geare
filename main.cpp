@@ -19,31 +19,24 @@ struct C {};
 int main(void) {
   auto world = World();
 
-  auto task_factory = [&](std::string_view task_name) -> Task {
-    static char id = 'a';
-    auto coro = [](int i, Executor &executor) -> Task {
+  auto task_factory = [&](std::string_view task_name) -> Executor::Task {
+    auto coro = [](int i, Executor &executor) -> Executor::Task {
       auto view = co_await executor.get_components<A, const B>();
-
-      for (;;) {
-        log_dbg("Did work and now has ", --i, " work left");
-
-        if (i > 0) {
-          {}
-          co_await std::suspend_always();
-        } else
-          break;
+      for (; i > 0; i--) {
+        log_dbg("Did work and now has ", i, " work left");
+        co_await executor.defer();
       };
-
       log_dbg("Done!");
       co_return;
     }(4, world.executor);
+
     coro.promise().set_name(task_name);
     return coro;
   };
 
-  world.executor.enqueue_immediate_task(task_factory("alpha"));
-  world.executor.enqueue_immediate_task(task_factory("beta"));
-  world.executor.enqueue_immediate_task(task_factory("gamma"));
+  world.executor.schedule(task_factory("alpha"));
+  world.executor.schedule(task_factory("beta"));
+  world.executor.schedule(task_factory("gamma"));
   world.executor.tick();
 
   return 0;

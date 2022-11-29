@@ -14,32 +14,32 @@
 
 namespace geare::core {
 
-struct task_promise_t;
-
-struct Task : std::coroutine_handle<task_promise_t> {
-  using promise_type = task_promise_t;
-};
-
-struct task_promise_t {
-  std::optional<std::string> task_name;
-
-  void set_name(std::string_view name) { this->task_name = name; }
-
-  Task get_return_object() { return {Task::from_promise(*this)}; }
-  std::suspend_always initial_suspend() noexcept { return {}; }
-  std::suspend_always final_suspend() noexcept { return {}; }
-
-  void return_void() {}
-  void unhandled_exception() {}
-};
-
 struct Executor {
   AdvancedRegistry *registry;
 
   Executor(AdvancedRegistry *registry) : registry(registry) {}
 
-  void enqueue_immediate_task(Task &&task) { tasks.push_back(task); }
-  void enqueue_delayed_task(Task &&task) { future_tasks.push_back(task); }
+  struct TaskPromise;
+
+  struct Task : std::coroutine_handle<TaskPromise> {
+    using promise_type = TaskPromise;
+  };
+
+  struct TaskPromise {
+    std::optional<std::string> task_name;
+
+    void set_name(std::string_view name) { this->task_name = name; }
+
+    Task get_return_object() { return {Task::from_promise(*this)}; }
+    std::suspend_always initial_suspend() noexcept { return {}; }
+    std::suspend_always final_suspend() noexcept { return {}; }
+
+    void return_void() {}
+    void unhandled_exception() {}
+  };
+
+  void schedule(Task &&task) { tasks.push_back(task); }
+  void schedule_next(Task &&task) { future_tasks.push_back(task); }
 
   void tick() {
     while (!tasks.empty())
@@ -58,16 +58,26 @@ struct Executor {
     }
   }
 
-  template <typename... Ts> struct AwaitForComponents {
+  struct AwaitExecutor : std::suspend_always {
     Executor *executor;
 
-    AwaitForComponents(Executor *executor) : executor(executor) {}
+    AwaitExecutor(Executor *executor) : executor(executor) {}
+  };
 
-    bool await_ready() { return false; }
+  struct AwaitDefer : AwaitExecutor {
+    void await_suspend(std::coroutine_handle<TaskPromise> handle) {
+      executor->schedule(handle.promise().get_return_object());
+    }
+  };
+
+  auto defer() -> AwaitDefer { return AwaitDefer{this}; }
+
+  template <typename... Ts> struct AwaitForComponents : AwaitExecutor {
+    using AwaitExecutor::AwaitExecutor;
 
     auto await_resume() { return executor->registry->get_components<Ts...>(); }
 
-    void await_suspend(std::coroutine_handle<task_promise_t> handle) {
+    void await_suspend(std::coroutine_handle<TaskPromise> handle) {
       log_dbg("Enqueued into the component waiting list");
 
       // TODO: just a stub to test if this approach even works
