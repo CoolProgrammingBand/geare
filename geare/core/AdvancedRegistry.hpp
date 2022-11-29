@@ -35,10 +35,13 @@ using getter_view = entt::view<entt::get_t<Ts...>, entt::exclude_t<>>;
 struct AdvancedRegistry : entt::registry {
   bool can_borrow(ComponentBorrowDescriptor borrow) {
     auto [id, kind] = borrow;
-    if (kind == ComponentBorrowKind::Mut)
-      return mut_map[id] == false && const_map[id] == 0;
+    auto [consts, is_mut] = active_borrows[id];
+    if (is_mut)
+      return false;
+    if (kind == ComponentBorrowKind::Const)
+      return true;
     else
-      return mut_map[id] == false;
+      return !consts;
   }
 
   bool can_borrow(std::span<const ComponentBorrowDescriptor> borrows) {
@@ -50,24 +53,26 @@ struct AdvancedRegistry : entt::registry {
 
   void _borrow_component_unsafe(ComponentBorrowDescriptor borrow) {
     auto [id, access_as] = borrow;
+    auto &[consts, is_mut] = active_borrows[id];
     if (access_as == ComponentBorrowKind::Mut)
-      mut_map[id] = true;
-    // Mutable components also read values as constant
-    const_map[id]++;
+      is_mut = true;
+    else
+      consts++;
     on_component_borrow(borrow);
   }
 
   void _release_component_unsafe(ComponentBorrowDescriptor borrow) {
     auto [id, previously_borrowed_as] = borrow;
+    auto &[consts, is_mut] = active_borrows[id];
     if (previously_borrowed_as == ComponentBorrowKind::Mut)
-      mut_map[id] = false;
-    // Mutable components also read values as constants
-    const_map[id]--;
+      is_mut = false;
+    else
+      consts--;
     on_component_released(borrow);
   }
 
   unsigned count_component_usages(UniqueComponentIdentifier id) {
-    return const_map[id];
+    return active_borrows[id].count();
   }
 
   template <typename... Ts> struct SimpleView : getter_view<Ts...> {
@@ -86,9 +91,18 @@ struct AdvancedRegistry : entt::registry {
     }
   };
 
-  // TODO: condense them into one map?
-  std::map<UniqueComponentIdentifier, bool> mut_map;
-  std::map<UniqueComponentIdentifier, unsigned> const_map;
+  struct ActiveBorrow : std::pair<unsigned, bool> {
+    using std::pair<unsigned, bool>::pair;
+
+    inline bool &is_mut_borrowed() { return this->second; }
+    inline unsigned &const_borrows() { return this->first; }
+
+    inline unsigned count() {
+      return const_borrows() + (unsigned)is_mut_borrowed();
+    }
+  };
+
+  std::map<UniqueComponentIdentifier, ActiveBorrow> active_borrows;
 
   entt::delegate<void(ComponentBorrowDescriptor)> on_component_released{
       [](const void *, ComponentBorrowDescriptor) {}};
