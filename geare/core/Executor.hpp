@@ -57,32 +57,9 @@ struct Executor {
     while (waiting_on_components.size() + tasks.size() > 0) {
       while (!tasks.empty())
         this->step();
-
-      decltype(waiting_on_components) currently_waiting;
-      std::swap(currently_waiting, waiting_on_components);
-      while (!currently_waiting.empty()) {
-        auto [task_tmp, awaiting_components] =
-            std::move(currently_waiting.front());
-          currently_waiting.pop_front();
-        auto task = task_tmp;
-        log_begin_ctx(task.promise().task_name.value_or("none"));
-
-        auto borrows = awaiting_components->get_borrows();
-
-        if (this->registry->can_borrow(borrows)) {
-          log_dbg("Got components!");
-          // Construct view, occupying the component
-          awaiting_components->_resolve();
-          tasks.push_front(task);
-        } else {
-          log_dbg("Can't get components, deferring");
-          waiting_on_components.push_back(
-              std::make_pair(task, awaiting_components));
-        }
-
-        log_end_ctx();
-      }
+      _try_reschedule_waiting_tasks();
     }
+
     std::swap(future_tasks, tasks);
   }
 
@@ -93,6 +70,31 @@ struct Executor {
       auto &maybe_task_name = task.promise().task_name;
       log_begin_ctx(maybe_task_name.value_or("none"));
       task.resume();
+      log_end_ctx();
+    }
+  }
+
+  void _try_reschedule_waiting_tasks() {
+    auto currently_waiting = std::move(waiting_on_components);
+
+    while (!currently_waiting.empty()) {
+      auto [task, awaiting_components] =
+          std::pair(std::move(currently_waiting.front()));
+      currently_waiting.pop_front();
+
+      log_begin_ctx(task.promise().task_name.value_or("none"));
+
+      auto borrows = awaiting_components->get_borrows();
+      if (this->registry->can_borrow(borrows)) {
+        log_dbg("Got components!");
+        awaiting_components->_resolve();
+        tasks.push_front(task);
+      } else {
+        log_dbg("Can't get components, deferring");
+        waiting_on_components.push_back(
+            std::make_pair(task, awaiting_components));
+      }
+
       log_end_ctx();
     }
   }
@@ -136,16 +138,13 @@ struct Executor {
     }
 
     auto await_resume() {
-      // TODO: throw if resumed with no value
-      // RIIIGHT, so apparently there is no best way of moving out of an
-      // optional, so i had to reinvent this
+      if (!resolved_view)
+        throw std::logic_error("Attempt to access an unresolved view");
       return std::move(resolved_view.value());
     }
 
     void await_suspend(std::coroutine_handle<TaskPromise> handle) {
       log_dbg("Enqueued into the component waiting list");
-
-      // TODO: just a stub to test if this approach even works
       executor->waiting_on_components.push_back(
           std::make_pair(handle.promise().get_return_object(), this));
     }
@@ -160,7 +159,6 @@ struct Executor {
   }
 
   std::deque<std::pair<Task, AbstractAwaitComponents *>> waiting_on_components;
-
   std::deque<Task> tasks;
   std::deque<Task> future_tasks;
 };
