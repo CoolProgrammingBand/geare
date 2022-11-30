@@ -9,6 +9,7 @@
 #include "./geare/core/Logger.hpp"
 #include "./geare/core/World.hpp"
 #include "./geare/utils.hpp"
+#include "./geare/windowing/Window.hpp"
 
 using namespace geare::utils;
 using namespace geare::core;
@@ -38,7 +39,6 @@ int main(void) {
     return coro;
   };
 
-  world.executor.schedule(init_glfw());
   world.executor.schedule(task_factory("alpha"));
   world.executor.schedule(task_factory("beta"));
   world.executor.schedule(task_factory("gamma"));
@@ -46,6 +46,9 @@ int main(void) {
   Arena<> systems_arena;
 
   world.executor.systems.push_back(systems_arena.allocate<base::ClockSystem>());
+  world.executor.systems.push_back(
+      systems_arena.allocate<windowing::WindowSystem>());
+  windowing::Window::instance().show();
 
   for (;;) {
     world.executor.tick();

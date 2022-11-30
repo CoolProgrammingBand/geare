@@ -2,9 +2,11 @@
 #define _INCLUDE__GEARE__WINDOWING__WINDOW_
 
 #include "../base/Clock.hpp"
+#include "../core/Executor.hpp"
 #include "../core/Logger.hpp"
 #include "../graphics/Mesh.hpp"
 #include "../utils/Singleton.hpp"
+
 #include <entt.hpp>
 #include <glfw.hpp>
 #include <glm.hpp>
@@ -14,8 +16,8 @@
 namespace geare::windowing {
 
 struct Window : utils::Singleton<Window> {
-  entt::delegate<void(Window &)> on_should_close{[](const void *, Window &) {},
-                                                 this};
+  entt::delegate<void(Window &)> on_should_close{
+      [](const void *, Window &w) { w.hide(); }, this};
   bool is_alive = false;
   double cursor_x;
   double cursor_y;
@@ -72,7 +74,6 @@ struct Window : utils::Singleton<Window> {
 
   void tick_end() {
     glfwSwapBuffers(window);
-    base::Clock::instance().frame_count++;
     glfwPollEvents();
   }
 
@@ -122,16 +123,13 @@ protected:
   }
 };
 
-struct WindowBeginSystem : core::System {
-  WindowBeginSystem() { this->contract.global_priority = 6; }
-
-  virtual void tick() override { Window::instance().tick_begin(); }
-};
-
-struct WindowEndSystem : core::System {
-  WindowEndSystem() { this->contract.global_priority = -6; }
-
-  virtual void tick() override { Window::instance().tick_end(); }
+struct WindowSystem : core::Executor::System {
+  virtual auto task(core::Executor *exec) -> core::Executor::Task override {
+    Window::instance().tick_begin();
+    co_await exec->defer();
+    Window::instance().tick_end();
+    co_return;
+  }
 };
 
 } // namespace geare::windowing
