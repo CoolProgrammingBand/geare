@@ -8,6 +8,7 @@
 #include <span>
 #include <string>
 
+#include "../utils/Arena.hpp"
 #include "./AdvancedRegistry.hpp"
 #include "./Logger.hpp"
 
@@ -53,10 +54,29 @@ struct Executor {
   void schedule(Task &&task) { tasks.push_back(task); }
   void schedule_next(Task &&task) { future_tasks.push_back(task); }
 
-  Arena<> tick_arena;
-  Arena<> step_arena;
+  utils::Arena<> tick_arena;
+  utils::Arena<> step_arena;
+
+  struct System {
+    virtual auto task(Executor *) -> Executor::Task { co_return; }
+  };
+
+  // TODO: restrain this a concept
+  template <typename... Ts> struct StaticSystem {
+    virtual auto make_task(Executor *executor) -> Executor::Task {
+      auto components = co_await executor->get_components<Ts...>();
+      executor->schedule(make_task(std::move(components)));
+    }
+
+    // TODO: maybe replace this with a static method
+    virtual auto make_task(AdvancedRegistry::SimpleView<Ts...> &&view)
+        -> Executor::Task = 0;
+  };
 
   void tick() {
+    for (auto &system : systems)
+      tasks.push_back(system->task(this));
+
     while (waiting_on_components.size() + tasks.size() > 0) {
       while (!tasks.empty())
         this->step();
@@ -166,6 +186,8 @@ struct Executor {
   std::deque<std::pair<Task, AbstractAwaitComponents *>> waiting_on_components;
   std::deque<Task> tasks;
   std::deque<Task> future_tasks;
+
+  std::vector<System *> systems;
 };
 
 } // namespace geare::core

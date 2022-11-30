@@ -3,6 +3,8 @@
 #include <iostream>
 #include <syncstream>
 
+#include "./geare/backend/GLFW.hpp"
+#include "./geare/base/Clock.hpp"
 #include "./geare/core/Executor.hpp"
 #include "./geare/core/Logger.hpp"
 #include "./geare/core/World.hpp"
@@ -10,6 +12,7 @@
 
 using namespace geare::utils;
 using namespace geare::core;
+using namespace geare::backend;
 using namespace geare;
 
 struct A {};
@@ -35,10 +38,18 @@ int main(void) {
     return coro;
   };
 
+  world.executor.schedule(init_glfw());
   world.executor.schedule(task_factory("alpha"));
   world.executor.schedule(task_factory("beta"));
   world.executor.schedule(task_factory("gamma"));
-  world.executor.tick();
+
+  Arena<> systems_arena;
+
+  world.executor.systems.push_back(systems_arena.allocate<base::ClockSystem>());
+
+  for (;;) {
+    world.executor.tick();
+  }
 
   return 0;
 }

@@ -1,10 +1,11 @@
 #ifndef _INCLUDE__GEARE__BASE__CLOCK_
 #define _INCLUDE__GEARE__BASE__CLOCK_
 
+#include "../core/Executor.hpp"
 #include "../core/Logger.hpp"
-#include "../core/System.hpp"
 #include "../utils/Singleton.hpp"
-#include "glfw.hpp"
+
+#include <glfw.hpp>
 
 namespace geare::base {
 
@@ -12,35 +13,35 @@ struct Clock : utils::Singleton<Clock> {
   double delta_time;
   double fixed_timestep;
   double global_time;
-  unsigned long frame_count;
+  unsigned long tick_count;
 
-  double frame_timer;
-  unsigned long fps;
+  double tick_timer;
+  unsigned long tps;
 };
 
-struct ClockSystem : core::System {
-  ClockSystem() {
-    contract.call_only_on_main = false;
-    contract.global_priority = INT32_MAX;
-  }
+struct ClockSystem : core::Executor::System {
+  ClockSystem() {}
 
-  virtual void tick() override {
+  virtual auto task(core::Executor *exec) -> core::Executor::Task override {
+    auto &clock = Clock::instance();
+
     log_begin_ctx("Clock");
 
-    auto &clock = Clock::instance();
+    clock.tick_count++;
     double current_tick_time = glfwGetTime();
     clock.global_time = current_tick_time;
     clock.delta_time = current_tick_time - last_tick_time;
     last_tick_time = current_tick_time;
 
-    if (clock.global_time - clock.frame_timer > 1) {
-      clock.fps = clock.frame_count;
-      clock.frame_count = 0;
-      clock.frame_timer = clock.global_time;
-      log_dbg("FPS: ", clock.fps);
+    if (clock.global_time - clock.tick_timer > 1) {
+      clock.tps = clock.tick_count;
+      clock.tick_count = 0;
+      clock.tick_timer = clock.global_time;
+      log_dbg("TPS: ", clock.tps);
     }
 
     log_end_ctx();
+    co_return;
   }
 
   double last_tick_time = 0;
