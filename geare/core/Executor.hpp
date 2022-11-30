@@ -53,6 +53,9 @@ struct Executor {
   void schedule(Task &&task) { tasks.push_back(task); }
   void schedule_next(Task &&task) { future_tasks.push_back(task); }
 
+  Arena<> tick_arena;
+  Arena<> step_arena;
+
   void tick() {
     while (waiting_on_components.size() + tasks.size() > 0) {
       while (!tasks.empty())
@@ -61,6 +64,7 @@ struct Executor {
     }
 
     std::swap(future_tasks, tasks);
+    tick_arena.clear();
   }
 
   void step() {
@@ -70,6 +74,7 @@ struct Executor {
       auto &maybe_task_name = task.promise().task_name;
       log_begin_ctx(maybe_task_name.value_or("none"));
       task.resume();
+      step_arena.clear();
       log_end_ctx();
     }
   }
