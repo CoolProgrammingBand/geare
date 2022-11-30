@@ -2,5 +2,4 @@
 #include "./core/Logger.hpp"
 #include "./core/Scene.hpp"
 #include "./core/Scheduler.hpp"
-#include "./core/System.hpp"
 #include "./core/World.hpp"
