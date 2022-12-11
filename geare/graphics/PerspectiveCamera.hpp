@@ -37,8 +37,7 @@ struct PerspectiveCameraSystem : core::Executor::System {
     }
 
     for (auto e : camera_entities) {
-      auto [camera, transform] =
-          exec->registry->get<PerspectiveCamera, const base::Transform>(e);
+      auto [camera, transform] = camera_entities.get(e);
 
       glfwGetFramebufferSize(windowing::Window::instance().window,
                              &camera.width, &camera.height);

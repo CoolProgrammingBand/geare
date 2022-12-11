@@ -84,6 +84,10 @@ struct AdvancedRegistry : entt::registry {
         registry._borrow_component_unsafe(borrow);
     }
 
+    auto get(AdvancedRegistry::entity_type entity) {
+      return ((AdvancedRegistry&)registry).get<Ts...>(entity);
+    }
+
     // TODO: remake this with RAII
     void release() {
       for (auto &borrow : multicomponent_access<Ts...>)
